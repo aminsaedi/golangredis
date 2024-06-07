@@ -25,16 +25,20 @@ func main() {
 			os.Exit(1)
 		}
 
-		scanner := bufio.NewScanner(conn)
-		for scanner.Scan() {
-			text := scanner.Text()
-			fmt.Println("Received: ", text)
-			if text == "PING" {
-				fmt.Println("Sent: +PONG")
-				conn.Write([]byte("+PONG\r\n"))
-			}
-		}
-		conn.Close()
+		go handleRequest(conn)
 	}
 
+}
+
+func handleRequest(conn net.Conn) {
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		text := scanner.Text()
+		fmt.Println("Received: ", text)
+		if text == "PING" {
+			fmt.Println("Sent: +PONG")
+			conn.Write([]byte("+PONG\r\n"))
+		}
+	}
+	conn.Close()
 }
