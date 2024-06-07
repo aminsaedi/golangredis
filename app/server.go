@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
 )
@@ -24,11 +26,25 @@ func main() {
 			os.Exit(1)
 		}
 
-		go func(c net.Conn) {
-			c.Read(make([]byte, 1))
-			c.Write([]byte("+PONG\r\n"))
-			c.Close()
-		}(conn)
+		buff := make([]byte, 50)
+		c := bufio.NewReader(conn)
+
+		for {
+			size, err := c.Read(buff)
+			if err != nil {
+				fmt.Println("Error reading: ", err.Error())
+				break
+			}
+			fmt.Println("Size:", string(buff[:size]))
+
+			_, err = io.ReadFull(c, buff[:size])
+			if err != nil {
+				fmt.Println("Error reading: ", err.Error())
+				break
+			}
+			fmt.Println("Data:", string(buff[:size]))
+		}
+
 	}
 
 }
