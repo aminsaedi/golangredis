@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"net"
 	"os"
 )
@@ -26,25 +25,16 @@ func main() {
 			os.Exit(1)
 		}
 
-		buff := make([]byte, 50)
-		c := bufio.NewReader(conn)
-
-		for {
-			size, err := c.Read(buff)
-			if err != nil {
-				fmt.Println("Error reading: ", err.Error())
-				break
+		scanner := bufio.NewScanner(conn)
+		for scanner.Scan() {
+			text := scanner.Text()
+			fmt.Println("Received: ", text)
+			if text == "PING" {
+				fmt.Println("Sent: +PONG")
+				conn.Write([]byte("+PONG\r\n"))
 			}
-			fmt.Println("Size:", string(buff[:size]))
-
-			_, err = io.ReadFull(c, buff[:size])
-			if err != nil {
-				fmt.Println("Error reading: ", err.Error())
-				break
-			}
-			fmt.Println("Data:", string(buff[:size]))
 		}
-
+		conn.Close()
 	}
 
 }
