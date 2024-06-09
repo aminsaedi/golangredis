@@ -8,6 +8,13 @@ import (
 	"strings"
 )
 
+type DataItem struct {
+	value  string
+	expiry int
+}
+
+var storage = make(map[string]DataItem)
+
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
@@ -34,12 +41,33 @@ func toBulkString(input string) string {
 	return "$" + fmt.Sprint(len(input)) + "\r\n" + input + "\r\n"
 }
 
+func toSimpleString(input string) string {
+	return "+" + input + "\n\r"
+}
+
 func echo(value string) string {
 	return toBulkString(value)
 }
 
 func ping() string {
-	return "+PONG\r\n"
+	return toSimpleString("PONG")
+}
+
+func set(key, value string) string {
+	storage[key] = DataItem{
+		value:  value,
+		expiry: -1,
+	}
+	return toSimpleString("OK")
+}
+
+func get(key string) string {
+	item, ok := storage[key]
+	if ok {
+		return item.value
+	} else {
+		return toSimpleString("Error")
+	}
 }
 
 func handleRequest(conn net.Conn) {
@@ -68,7 +96,12 @@ func handleRequest(conn net.Conn) {
 		case "PING":
 			result = ping()
 			tokens = make([]string, 0)
+		case "SET":
+			result = set(tokens[4], tokens[55])
+		case "GET":
+			result = get(tokens[4])
 		}
+
 		fmt.Printf("Rresult is : %q\n", result)
 		conn.Write([]byte(result))
 	}
