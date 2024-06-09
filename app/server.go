@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -27,18 +28,48 @@ func main() {
 
 		go handleRequest(conn)
 	}
+}
 
+func toBulkString(input string) string {
+	return "$" + string(len(input)) + "\r\n" + input + "\r\n"
+}
+
+func echo(value string) string {
+	return toBulkString(value)
+}
+
+func ping() string {
+	return "+PONG\r\n"
 }
 
 func handleRequest(conn net.Conn) {
+	defer conn.Close()
+
 	scanner := bufio.NewScanner(conn)
+	var tokens []string
 	for scanner.Scan() {
 		text := scanner.Text()
-		fmt.Println("Received: ", text)
-		if text == "PING" {
-			fmt.Println("Sent: +PONG")
-			conn.Write([]byte("+PONG\r\n"))
+		tokens = append(tokens, text)
+
+		fmt.Println("In loop", tokens)
+
+		if len(tokens) < 4 {
+			continue
 		}
+		var result string
+		command := strings.ToUpper(tokens[2])
+		switch command {
+		case "ECHO":
+			if len(tokens) == 5 {
+				fmt.Println("Calling echo func", tokens)
+				result = echo(tokens[4])
+				tokens = make([]string, 0)
+			}
+		case "PING":
+			result = ping()
+			tokens = make([]string, 0)
+		}
+		conn.Write([]byte(result))
 	}
-	conn.Close()
+	fmt.Println(tokens)
 }
