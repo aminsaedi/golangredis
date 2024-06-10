@@ -63,7 +63,6 @@ func set(key, value string) string {
 }
 
 func get(key string) string {
-	fmt.Println("Getting " + key + "...")
 	item, ok := storage[key]
 	if ok {
 		return toBulkString(item.value)
@@ -99,7 +98,6 @@ func handleRequest(conn net.Conn) {
 					result = get(tokens[4])
 				}
 
-				fmt.Printf("Rresult is : %q\n", result)
 				conn.Write([]byte(result))
 
 				// reset tokens
