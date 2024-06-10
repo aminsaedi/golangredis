@@ -1,9 +1,10 @@
 package internal
 
 import (
-	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/codecrafters-io/redis-starter-go/app/config"
 )
 
 func Echo(value string) string {
@@ -44,6 +45,8 @@ func Get(key string) string {
 }
 
 func Info(selection ...string) string {
-	fmt.Println("Selection: ", selection)
+	if config.AppConfig.Replicaof != "" {
+		return ToBulkString("role:slave")
+	}
 	return ToBulkString("role:master")
 }
