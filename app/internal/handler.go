@@ -41,3 +41,7 @@ func Get(key string) string {
 	return ToSimpleError("-1")
 
 }
+
+func Info(selection ...string) string {
+	return ToBulkString("role:master")
+}
