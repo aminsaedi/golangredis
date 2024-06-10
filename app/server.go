@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	internal "github.com/codecrafters-io/redis-starter-go/app/internal"
 )
 
 type DataItem struct {
@@ -46,63 +48,6 @@ func main() {
 	}
 }
 
-func getArayElement[T any](arr []T, index int, defaultValue T) T {
-	if index >= 0 && index < len(arr) {
-		return arr[index]
-	}
-	return defaultValue
-
-}
-
-func toBulkString(input string) string {
-	return "$" + fmt.Sprint(len(input)) + "\r\n" + input + "\r\n"
-}
-
-func toSimpleString(input string) string {
-	return "+" + input + "\r\n"
-}
-
-func toSimpleError(input string) string {
-	return "$" + input + "\r\n"
-}
-
-func echo(value string) string {
-	return toBulkString(value)
-}
-
-func ping() string {
-	return toSimpleString("PONG")
-}
-
-type SetConfig struct {
-	key        string
-	value      string
-	expiryType string
-	expiryIn   string
-}
-
-func set(config SetConfig) string {
-
-	toSet := DataItem{
-		value: config.value,
-	}
-	if len(config.expiryType) == 2 {
-		ms, _ := strconv.Atoi(config.expiryIn)
-		toSet.validTill = time.Now().Add(time.Duration(ms) * time.Millisecond)
-	}
-	storage[config.key] = toSet
-	return toSimpleString("OK")
-}
-
-func get(key string) string {
-	item, ok := storage[key]
-	if ok && item.isValid() {
-		return toBulkString(item.value)
-	}
-	return toSimpleError("-1")
-
-}
-
 func handleRequest(conn net.Conn) {
 	defer conn.Close()
 
@@ -122,18 +67,18 @@ func handleRequest(conn net.Conn) {
 				command := strings.ToUpper(tokens[2])
 				switch command {
 				case "ECHO":
-					result = echo(tokens[4])
+					result = internal.Echo(tokens[4])
 				case "PING":
-					result = ping()
+					result = internal.Ping()
 				case "SET":
-					result = set(SetConfig{
-						key:        tokens[4],
-						value:      tokens[6],
-						expiryType: getArayElement(tokens, 8, ""),
-						expiryIn:   getArayElement(tokens, 10, ""),
+					result = internal.Set(internal.SetConfig{
+						Key:        tokens[4],
+						Value:      tokens[6],
+						ExpiryType: internal.GetArayElement(tokens, 8, ""),
+						ExpiryIn:   internal.GetArayElement(tokens, 10, ""),
 					})
 				case "GET":
-					result = get(tokens[4])
+					result = internal.Get(tokens[4])
 				}
 
 				conn.Write([]byte(result))
