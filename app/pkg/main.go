@@ -66,6 +66,8 @@ func handleRequest(conn net.Conn) {
 					})
 				case "GET":
 					result = internal.Get(tokens[4])
+				case "INFO":
+					result = internal.Info(tokens[3:]...)
 				}
 
 				conn.Write([]byte(result))
