@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -40,4 +41,9 @@ func Get(key string) string {
 	}
 	return ToSimpleError("-1")
 
+}
+
+func Info(selection ...string) string {
+	fmt.Println("Selection: ", selection)
+	return ToBulkString("role:master")
 }
