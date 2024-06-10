@@ -7,11 +7,19 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type DataItem struct {
-	value  string
-	expiry int
+	value        string
+	validityInMS int64
+	createdOn    time.Time `go:"init=now"`
+}
+
+func (di *DataItem) isValid() bool {
+	fmt.Println("latest valid: ", di.createdOn.UnixMilli()+di.validityInMS, " Validity: ", di.validityInMS)
+	fmt.Println("Now: ", time.Now().UnixMilli())
+	return di.createdOn.UnixMilli()+di.validityInMS < time.Now().UnixMilli()
 }
 
 var storage = make(map[string]DataItem)
@@ -38,12 +46,24 @@ func main() {
 	}
 }
 
+func getArayElement[T any](arr []T, index int, defaultValue T) T {
+	if index >= 0 && index < len(arr) {
+		return arr[index]
+	}
+	return defaultValue
+
+}
+
 func toBulkString(input string) string {
 	return "$" + fmt.Sprint(len(input)) + "\r\n" + input + "\r\n"
 }
 
 func toSimpleString(input string) string {
 	return "+" + input + "\r\n"
+}
+
+func toSimpleError(input string) string {
+	return "$" + input + "\r\n"
 }
 
 func echo(value string) string {
@@ -54,21 +74,35 @@ func ping() string {
 	return toSimpleString("PONG")
 }
 
-func set(key, value string) string {
-	storage[key] = DataItem{
-		value:  value,
-		expiry: -1,
+type SetConfig struct {
+	key        string
+	value      string
+	expiryType string
+	expiryIn   string
+}
+
+func set(config SetConfig) string {
+
+	toSet := DataItem{
+		value: config.value,
 	}
+	if len(config.expiryType) == 2 {
+		ms, _ := strconv.Atoi(config.expiryIn)
+		toSet.validityInMS = int64(ms)
+		fmt.Println("Setting expiry to ", ms)
+
+	}
+	storage[config.key] = toSet
 	return toSimpleString("OK")
 }
 
 func get(key string) string {
 	item, ok := storage[key]
-	if ok {
+	if ok && item.isValid() {
 		return toBulkString(item.value)
-	} else {
-		return toSimpleString("Error")
 	}
+	return toSimpleError("-1")
+
 }
 
 func handleRequest(conn net.Conn) {
@@ -82,7 +116,8 @@ func handleRequest(conn net.Conn) {
 
 		if len(tokens) > 0 && strings.HasPrefix(tokens[0], "*") {
 			requiredItems, _ := strconv.Atoi(tokens[0][1:])
-			if len(tokens) == requiredItems*2+1 {
+			requiredItems = requiredItems*2 + 1
+			if len(tokens) == requiredItems {
 				// run command
 
 				var result string
@@ -93,7 +128,12 @@ func handleRequest(conn net.Conn) {
 				case "PING":
 					result = ping()
 				case "SET":
-					result = set(tokens[4], tokens[6])
+					result = set(SetConfig{
+						key:        tokens[4],
+						value:      tokens[6],
+						expiryType: getArayElement(tokens, 8, ""),
+						expiryIn:   getArayElement(tokens, 10, ""),
+					})
 				case "GET":
 					result = get(tokens[4])
 				}
