@@ -8,14 +8,18 @@ import (
 	"strconv"
 	"strings"
 
+	c "github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
 )
 
 type StartConfig struct {
-	Port int
+	Port      int
+	Replicaof string
 }
 
 func StartServer(config StartConfig) {
+	c.AppConfig.Replicaof = config.Replicaof
+
 	listenser, err := net.Listen("tcp", "0.0.0.0:"+strconv.Itoa(config.Port))
 	if err != nil {
 		fmt.Println("Failed to bind to port")
