@@ -46,6 +46,10 @@ func toSimpleString(input string) string {
 	return "+" + input + "\r\n"
 }
 
+func toSimpleError(input string) string {
+	return "$" + input + "\r\n"
+}
+
 func echo(value string) string {
 	return toBulkString(value)
 }
@@ -67,7 +71,7 @@ func get(key string) string {
 	if ok {
 		return toBulkString(item.value)
 	} else {
-		return toSimpleString("Error")
+		return toSimpleError("-1")
 	}
 }
 
@@ -82,7 +86,10 @@ func handleRequest(conn net.Conn) {
 
 		if len(tokens) > 0 && strings.HasPrefix(tokens[0], "*") {
 			requiredItems, _ := strconv.Atoi(tokens[0][1:])
-			if len(tokens) == requiredItems*2+1 {
+			requiredItems = requiredItems*2 + 1
+			fmt.Println(tokens)
+			fmt.Println("Required:", requiredItems, " - Current: ", len(tokens))
+			if len(tokens) == requiredItems {
 				// run command
 
 				var result string
