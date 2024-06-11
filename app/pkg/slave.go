@@ -15,6 +15,8 @@ func connectToMaster() {
 	}
 	defer conn.Close()
 
+	// read `empty.rdb` file and send it to the master
+
 	commands := []string{
 		internal.ToArray("PING"),
 		internal.ToArray("REPLCONF", "listening-port", fmt.Sprint(config.AppConfig.BindingPort)),
@@ -26,4 +28,5 @@ func connectToMaster() {
 		reply := make([]byte, 1024)
 		conn.Read(reply)
 	}
+
 }
