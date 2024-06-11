@@ -1,8 +1,10 @@
 package pkg
 
 import (
+	"fmt"
 	"net"
 
+	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
 )
 
@@ -20,5 +22,7 @@ func connectToMaster() {
 
 	// send PING
 	conn.Write([]byte(internal.ToArray("PING")))
+	conn.Write([]byte(internal.ToArray("REPLCONF", "listening-port", fmt.Sprint(config.AppConfig.BindingPort))))
+	conn.Write([]byte(internal.ToArray("REPLCONF", "capa", "psync2")))
 
 }
