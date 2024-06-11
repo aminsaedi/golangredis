@@ -82,5 +82,4 @@ func handleRequest(conn net.Conn) {
 		}
 
 	}
-	fmt.Println(tokens)
 }
