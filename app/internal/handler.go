@@ -57,3 +57,7 @@ func Info(selection ...string) string {
 
 	return ToBulkStringFromMap(result)
 }
+
+func Replconf(args ...string) string {
+	return ToSimpleString("OK")
+}
