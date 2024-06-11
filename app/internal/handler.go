@@ -45,8 +45,15 @@ func Get(key string) string {
 }
 
 func Info(selection ...string) string {
-	if config.AppConfig.Replicaof != "" {
-		return ToBulkString("role:slave")
+	result := map[string]string{
+		"role":               "master",
+		"master_replid":      config.AppConfig.MasterReplId,
+		"master_repl_offset": "0",
 	}
-	return ToBulkString("role:master")
+
+	if config.AppConfig.Replicaof != "" {
+		result["role"] = "slave"
+	}
+
+	return ToBulkStringFromMap(result)
 }
