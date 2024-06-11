@@ -77,6 +77,8 @@ func handleRequest(conn net.Conn) {
 					result = internal.Get(tokens[4])
 				case "INFO":
 					result = internal.Info(tokens[3:]...)
+				case "REPLCONF":
+					result = internal.ToSimpleString("OK")
 				}
 
 				conn.Write([]byte(result))
