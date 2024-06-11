@@ -18,6 +18,7 @@ type StartConfig struct {
 }
 
 func StartServer(config StartConfig) {
+
 	c.AppConfig.Replicaof = config.Replicaof
 	c.AppConfig.BindingPort = config.Port
 
@@ -81,6 +82,8 @@ func handleRequest(conn net.Conn) {
 					result = internal.Replconf(tokens[3:]...)
 				case "PSYNC":
 					result = internal.Psync(tokens[3:]...)
+					conn.Write([]byte(result))
+					result = internal.RDBFileToString("empty.rdb")
 				}
 
 				conn.Write([]byte(result))

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -65,4 +66,12 @@ func Replconf(args ...string) string {
 
 func Psync(args ...string) string {
 	return ToSimpleString("FULLRESYNC " + config.AppConfig.MasterReplId + " " + fmt.Sprint(config.AppConfig.MasterReplOffset))
+}
+
+func RDBFileToString(filePath string) string {
+	dat, err := os.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+	return "$" + fmt.Sprint(len(dat)) + "\r\n" + string(dat)
 }
