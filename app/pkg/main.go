@@ -79,6 +79,8 @@ func handleRequest(conn net.Conn) {
 					result = internal.Info(tokens[3:]...)
 				case "REPLCONF":
 					result = internal.Replconf(tokens[3:]...)
+				case "PSYNC":
+					result = internal.Psync(tokens[3:]...)
 				}
 
 				conn.Write([]byte(result))

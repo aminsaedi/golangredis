@@ -61,3 +61,7 @@ func Info(selection ...string) string {
 func Replconf(args ...string) string {
 	return ToSimpleString("OK")
 }
+
+func Psync(args ...string) string {
+	return ToSimpleString("FULLRESYNC " + config.AppConfig.MasterReplId + " 0")
+}
