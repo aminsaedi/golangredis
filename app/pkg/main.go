@@ -19,6 +19,7 @@ type StartConfig struct {
 
 func StartServer(config StartConfig) {
 	c.AppConfig.Replicaof = config.Replicaof
+	c.AppConfig.BindingPort = config.Port
 
 	if c.AppConfig.Replicaof != "" {
 		go connectToMaster()
