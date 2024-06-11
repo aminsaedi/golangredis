@@ -12,9 +12,10 @@ func generateRandomString() string {
 }
 
 type sharedConfig struct {
-	BindingPort  int
-	Replicaof    string
-	MasterReplId string
+	BindingPort      int
+	Replicaof        string
+	MasterReplId     string
+	MasterReplOffset int
 }
 
 var AppConfig = sharedConfig{

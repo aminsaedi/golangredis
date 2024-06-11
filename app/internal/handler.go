@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -48,7 +49,7 @@ func Info(selection ...string) string {
 	result := map[string]string{
 		"role":               "master",
 		"master_replid":      config.AppConfig.MasterReplId,
-		"master_repl_offset": "0",
+		"master_repl_offset": fmt.Sprint(config.AppConfig.MasterReplOffset),
 	}
 
 	if config.AppConfig.Replicaof != "" {
@@ -60,4 +61,8 @@ func Info(selection ...string) string {
 
 func Replconf(args ...string) string {
 	return ToSimpleString("OK")
+}
+
+func Psync(args ...string) string {
+	return ToSimpleString("FULLRESYNC " + config.AppConfig.MasterReplId + " " + fmt.Sprint(config.AppConfig.MasterReplOffset))
 }
