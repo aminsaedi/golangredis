@@ -35,3 +35,12 @@ func ToSimpleString(input string) string {
 func ToSimpleError(input string) string {
 	return "$" + input + "\r\n"
 }
+
+func ToArray(input ...string) string {
+	finalString := ""
+	for _, v := range input {
+		finalString += "$" + fmt.Sprint(len(v)) + "\r\n" + v + "\r\n"
+
+	}
+	return "*" + fmt.Sprint(len(input)) + "\r\n" + finalString
+}

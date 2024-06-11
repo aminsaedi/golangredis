@@ -20,6 +20,10 @@ type StartConfig struct {
 func StartServer(config StartConfig) {
 	c.AppConfig.Replicaof = config.Replicaof
 
+	if c.AppConfig.Replicaof != "" {
+		go connectToMaster()
+	}
+
 	listenser, err := net.Listen("tcp", "0.0.0.0:"+strconv.Itoa(config.Port))
 	if err != nil {
 		fmt.Println("Failed to bind to port")
