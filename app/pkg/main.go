@@ -49,6 +49,7 @@ func handleRequest(conn net.Conn) {
 	defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
+	isConnectionFromSlave := false
 	var tokens []string
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -84,14 +85,23 @@ func handleRequest(conn net.Conn) {
 					result = internal.Psync(tokens[3:]...)
 					conn.Write([]byte(result))
 					result = internal.RDBFileToString("empty.rdb")
+					c.PropogationStatus.ConnectedSlaves = append(c.PropogationStatus.ConnectedSlaves, conn)
+					isConnectionFromSlave = true
 				}
 
 				conn.Write([]byte(result))
 
 				// reset tokens
 				tokens = make([]string, 0)
+
 			}
+
+		}
+		if isConnectionFromSlave {
+			break
 		}
 
 	}
+
+	go PropogateToSlaves()
 }
