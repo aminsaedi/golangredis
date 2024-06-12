@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
@@ -29,4 +30,22 @@ func connectToMaster() {
 		conn.Read(reply)
 	}
 
+}
+
+func PropogateToSlaves() {
+
+	for {
+		time.Sleep(1 * time.Second)
+		for _, conn := range config.PropogationStatus.ConnectedSlaves {
+			conn.Write([]byte("amin"))
+			fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
+			for _, command := range config.PropogationStatus.Commands {
+				fmt.Printf("Propogating command: %q\n", command)
+				conn.Write([]byte(command))
+				time.Sleep(3 * time.Second)
+				// reply := make([]byte, 1024)
+				// conn.Read(reply)
+			}
+		}
+	}
 }
