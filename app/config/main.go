@@ -1,6 +1,9 @@
 package config
 
-import "math/rand"
+import (
+	"math/rand"
+	"net"
+)
 
 func generateRandomString() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -17,6 +20,13 @@ type sharedConfig struct {
 	MasterReplId     string
 	MasterReplOffset int
 }
+
+type propogationStatus struct {
+	Commands        []string
+	ConnectedSlaves []net.Conn
+}
+
+var PropogationStatus = propogationStatus{}
 
 var AppConfig = sharedConfig{
 	MasterReplId: generateRandomString(),
