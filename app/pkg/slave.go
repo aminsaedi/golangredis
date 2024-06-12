@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"net"
+	"slices"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
@@ -33,21 +34,23 @@ func connectToMaster() {
 }
 
 func PropogateToSlaves() {
-	var propogated map[string]map[string]string = make(map[string]map[string]string)
+	// to prevent propogation of same command multiple times, we will keep track of commands that have been propogated
+	var propogated []string
 	for {
 		time.Sleep(1 * time.Second)
 		for _, conn := range config.PropogationStatus.ConnectedSlaves {
-			propogated[conn.RemoteAddr().String()] = make(map[string]string)
-			fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
+			// fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
 			for _, command := range config.PropogationStatus.Commands {
-				if _, ok := propogated[conn.RemoteAddr().String()][command]; ok {
+
+				if slices.Contains(propogated, command+"__"+conn.RemoteAddr().String()) {
 					continue
 				}
-
-				fmt.Printf("Propogating command: %q\n", command)
+				// fmt.Printf("Propogating command: %q\n", command)
 				conn.Write([]byte(command))
-				propogated[conn.RemoteAddr().String()][command] = "propogated"
+				propogated = append(propogated, command+"__"+conn.RemoteAddr().String())
+				// pp.Print(propogated)
 			}
+
 		}
 	}
 }
