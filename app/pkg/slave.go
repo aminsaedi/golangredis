@@ -30,3 +30,18 @@ func connectToMaster() {
 	}
 
 }
+
+func PropogateToSlaves() {
+
+	for {
+		for _, conn := range config.PropogationStatus.ConnectedSlaves {
+			fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
+			for _, command := range config.PropogationStatus.Commands {
+				fmt.Printf("Propogating command: %q\n", command)
+				conn.Write([]byte(command))
+				// reply := make([]byte, 1024)
+				// conn.Read(reply)
+			}
+		}
+	}
+}
