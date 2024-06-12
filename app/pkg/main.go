@@ -101,7 +101,7 @@ func handleRequest(conn net.Conn) {
 		}
 		if isConnectionFromSlave {
 			// conn.Write([]byte("amin"))
-			go PropogateToSlaves()
+			go PropogateToSlaves(conn)
 			fmt.Println("Breaking loop")
 			break
 		}
