@@ -38,15 +38,16 @@ func PropogateToSlaves() {
 		time.Sleep(1 * time.Second)
 		for _, conn := range config.PropogationStatus.ConnectedSlaves {
 			propogated[conn.RemoteAddr().String()] = make(map[string]string)
-			fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
+			// fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
 			for _, command := range config.PropogationStatus.Commands {
 				if _, ok := propogated[conn.RemoteAddr().String()][command]; ok {
 					continue
 				}
 
-				fmt.Printf("Propogating command: %q\n", command)
+				// fmt.Printf("Propogating command: %q\n", command)
 				conn.Write([]byte(command))
 				propogated[conn.RemoteAddr().String()][command] = "propogated"
+				fmt.Println(propogated)
 			}
 		}
 	}
