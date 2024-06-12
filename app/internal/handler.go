@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
+	c "github.com/codecrafters-io/redis-starter-go/app/config"
 )
 
 func Echo(value string) string {
@@ -34,6 +35,7 @@ func Set(config SetConfig) string {
 		toSet.validTill = time.Now().Add(time.Duration(ms) * time.Millisecond)
 	}
 	SetStorageItem(config.Key, toSet)
+	c.PropogationStatus.Commands = append(c.PropogationStatus.Commands, ToArray("SET", config.Key, config.Value))
 	return ToSimpleString("OK")
 }
 
@@ -49,11 +51,11 @@ func Get(key string) string {
 func Info(selection ...string) string {
 	result := map[string]string{
 		"role":               "master",
-		"master_replid":      config.AppConfig.MasterReplId,
-		"master_repl_offset": fmt.Sprint(config.AppConfig.MasterReplOffset),
+		"master_replid":      c.AppConfig.MasterReplId,
+		"master_repl_offset": fmt.Sprint(c.AppConfig.MasterReplOffset),
 	}
 
-	if config.AppConfig.Replicaof != "" {
+	if c.AppConfig.Replicaof != "" {
 		result["role"] = "slave"
 	}
 
@@ -65,7 +67,7 @@ func Replconf(args ...string) string {
 }
 
 func Psync(args ...string) string {
-	return ToSimpleString("FULLRESYNC " + config.AppConfig.MasterReplId + " " + fmt.Sprint(config.AppConfig.MasterReplOffset))
+	return ToSimpleString("FULLRESYNC " + c.AppConfig.MasterReplId + " " + fmt.Sprint(config.AppConfig.MasterReplOffset))
 }
 
 func RDBFileToString(filePath string) string {
