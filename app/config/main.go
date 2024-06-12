@@ -16,7 +16,14 @@ type sharedConfig struct {
 	Replicaof        string
 	MasterReplId     string
 	MasterReplOffset int
+	ConnectedSlaves  []string
 }
+
+type propogationStatus struct {
+	Commands []string
+}
+
+var PropogationStatus = propogationStatus{}
 
 var AppConfig = sharedConfig{
 	MasterReplId: generateRandomString(),

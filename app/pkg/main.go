@@ -84,13 +84,17 @@ func handleRequest(conn net.Conn) {
 					result = internal.Psync(tokens[3:]...)
 					conn.Write([]byte(result))
 					result = internal.RDBFileToString("empty.rdb")
+					c.AppConfig.ConnectedSlaves = append(c.AppConfig.ConnectedSlaves, conn.RemoteAddr().String())
 				}
 
 				conn.Write([]byte(result))
 
 				// reset tokens
 				tokens = make([]string, 0)
+
+				PropogateToSlaves()
 			}
+
 		}
 
 	}
