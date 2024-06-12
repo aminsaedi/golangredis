@@ -61,6 +61,7 @@ func handleRequest(conn net.Conn) {
 				// run command
 
 				var result string
+				var toPropagate []string
 				command := strings.ToUpper(tokens[2])
 				switch command {
 				case "ECHO":
@@ -84,13 +85,17 @@ func handleRequest(conn net.Conn) {
 					result = internal.Psync(tokens[3:]...)
 					conn.Write([]byte(result))
 					result = internal.RDBFileToString("empty.rdb")
+					c.AppConfig.ConnectedSlaves = append(c.AppConfig.ConnectedSlaves, conn.RemoteAddr().String())
 				}
 
 				conn.Write([]byte(result))
 
 				// reset tokens
 				tokens = make([]string, 0)
+
+				PropogateToSlaves(toPropagate)
 			}
+
 		}
 
 	}

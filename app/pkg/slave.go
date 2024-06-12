@@ -30,3 +30,20 @@ func connectToMaster() {
 	}
 
 }
+
+func PropogateToSlaves(commands []string) {
+	for _, slaveAddress := range config.AppConfig.ConnectedSlaves {
+		conn, err := net.Dial("tcp", slaveAddress)
+		if err != nil {
+			fmt.Println("Failed to connect to slave: ", slaveAddress)
+			continue
+		}
+		defer conn.Close()
+
+		for _, command := range commands {
+			conn.Write([]byte(command))
+			reply := make([]byte, 1024)
+			conn.Read(reply)
+		}
+	}
+}
