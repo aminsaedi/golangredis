@@ -7,6 +7,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
+	"github.com/k0kubun/pp"
 )
 
 func connectToMaster() {
@@ -33,21 +34,28 @@ func connectToMaster() {
 }
 
 func PropogateToSlaves() {
-	var propogated map[string]map[string]string = make(map[string]map[string]string)
+	// to prevent propogation of same command multiple times, we will keep track of commands that have been propogated
+	propogated := make(map[string]struct{})
 	for {
 		time.Sleep(1 * time.Second)
 		for _, conn := range config.PropogationStatus.ConnectedSlaves {
-			propogated[conn.RemoteAddr().String()] = make(map[string]string)
-			fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
+			// fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
 			for _, command := range config.PropogationStatus.Commands {
-				if _, ok := propogated[conn.RemoteAddr().String()][command]; ok {
+				key := command + "__" + conn.RemoteAddr().String()
+				// fmt.Println("Already propogated: ", propogated)
+
+				if _, ok := propogated[key]; ok {
+
 					continue
 				}
 
-				fmt.Printf("Propogating command: %q\n", command)
+				// fmt.Printf("Propogating command: %q\n", command)
 				conn.Write([]byte(command))
-				propogated[conn.RemoteAddr().String()][command] = "propogated"
+				propogated[key] = struct{}{}
+				pp.Println(propogated)
+				time.Sleep(500 * time.Millisecond)
 			}
+
 		}
 	}
 }
