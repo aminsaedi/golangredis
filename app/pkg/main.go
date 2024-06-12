@@ -85,7 +85,6 @@ func handleRequest(conn net.Conn) {
 					result = internal.Psync(tokens[3:]...)
 					conn.Write([]byte(result))
 					result = internal.RDBFileToString("empty.rdb")
-					c.PropogationStatus.ConnectedSlaves = append(c.PropogationStatus.ConnectedSlaves, conn)
 					isConnectionFromSlave = true
 					// print connected slave address and port
 					fmt.Println("Connected slave: ", conn.RemoteAddr().String())
@@ -101,7 +100,7 @@ func handleRequest(conn net.Conn) {
 		}
 		if isConnectionFromSlave {
 			// conn.Write([]byte("amin"))
-			go PropogateToSlaves()
+			go PropogateToSlaves(conn)
 			fmt.Println("Breaking loop")
 			break
 		}

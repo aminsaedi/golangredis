@@ -2,7 +2,6 @@ package config
 
 import (
 	"math/rand"
-	"net"
 )
 
 func generateRandomString() string {
@@ -22,8 +21,7 @@ type sharedConfig struct {
 }
 
 type propogationStatus struct {
-	Commands        []string
-	ConnectedSlaves []net.Conn
+	Commands []string
 }
 
 var PropogationStatus = propogationStatus{}

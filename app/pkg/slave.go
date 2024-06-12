@@ -32,22 +32,20 @@ func connectToMaster() {
 
 }
 
-func PropogateToSlaves() {
-	var propogated map[string]map[string]string = make(map[string]map[string]string)
+func PropogateToSlaves(conn net.Conn) {
+	propogated := make(map[string]struct{})
 	for {
 		time.Sleep(1 * time.Second)
-		for _, conn := range config.PropogationStatus.ConnectedSlaves {
-			propogated[conn.RemoteAddr().String()] = make(map[string]string)
-			fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
-			for _, command := range config.PropogationStatus.Commands {
-				if _, ok := propogated[conn.RemoteAddr().String()][command]; ok {
-					continue
-				}
+		for _, command := range config.PropogationStatus.Commands {
+			key := command + "__" + conn.RemoteAddr().String()
 
-				fmt.Printf("Propogating command: %q\n", command)
-				conn.Write([]byte(command))
-				propogated[conn.RemoteAddr().String()][command] = "propogated"
+			if _, ok := propogated[key]; ok {
+				continue
 			}
+
+			conn.Write([]byte(command))
+			propogated[key] = struct{}{}
 		}
+
 	}
 }
