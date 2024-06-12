@@ -32,22 +32,28 @@ func connectToMaster() {
 
 }
 
-func PropogateToSlaves() {
-	var propogated map[string]map[string]string = make(map[string]map[string]string)
+func PropogateToSlaves(conn net.Conn) {
+	// to prevent propogation of same command multiple times, we will keep track of commands that have been propogated
+	propogated := make(map[string]struct{})
+	fmt.Println("To prop:", config.PropogationStatus.Commands)
+	time.Sleep(500 * time.Millisecond)
 	for {
 		time.Sleep(1 * time.Second)
-		for _, conn := range config.PropogationStatus.ConnectedSlaves {
-			propogated[conn.RemoteAddr().String()] = make(map[string]string)
-			fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
-			for _, command := range config.PropogationStatus.Commands {
-				if _, ok := propogated[conn.RemoteAddr().String()][command]; ok {
-					continue
-				}
+		// fmt.Println("Propogating to slave: ", conn.RemoteAddr().String())
+		for _, command := range config.PropogationStatus.Commands {
+			key := command + "__" + conn.RemoteAddr().String()
+			// fmt.Println("Already propogated: ", propogated)
 
-				fmt.Printf("Propogating command: %q\n", command)
-				conn.Write([]byte(command))
-				propogated[conn.RemoteAddr().String()][command] = "propogated"
+			if _, ok := propogated[key]; ok {
+
+				continue
 			}
+
+			// fmt.Printf("Propogating command: %q\n", command)
+			conn.Write([]byte(command))
+			propogated[key] = struct{}{}
+			// time.Sleep(500 * time.Millisecond)
 		}
+
 	}
 }
