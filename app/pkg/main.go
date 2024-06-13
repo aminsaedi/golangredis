@@ -43,11 +43,12 @@ func StartServer(config StartConfig) {
 			os.Exit(1)
 		}
 
-		go HandleRequestAsMaster(conn)
+		go HandleRequestAsMaster(conn, false)
 	}
 }
 
-func HandleRequestAsMaster(conn net.Conn) {
+func HandleRequestAsMaster(conn net.Conn, ignoreResponse bool) {
+
 	// defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
@@ -110,7 +111,9 @@ func HandleRequestAsMaster(conn net.Conn) {
 					fmt.Println("Connected slave: ", conn.RemoteAddr().String())
 				}
 
-				conn.Write([]byte(result))
+				if !ignoreResponse && command != "REPLCONF" {
+					conn.Write([]byte(result))
+				}
 
 				// reset tokens
 				tokens = make([]string, 0)
