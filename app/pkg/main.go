@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
+	"github.com/k0kubun/pp"
 )
 
 type StartConfig struct {
@@ -41,19 +43,36 @@ func StartServer(config StartConfig) {
 			os.Exit(1)
 		}
 
-		go handleRequest(conn)
+		go HandleRequestAsMaster(conn)
 	}
 }
 
-func handleRequest(conn net.Conn) {
+func HandleRequestAsMaster(conn net.Conn) {
 	// defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
 	isConnectionFromSlave := false
+
 	var tokens []string
 	for scanner.Scan() {
 		text := scanner.Text()
+
+		text = strings.Map(func(r rune) rune {
+			if r < 32 || r > 126 { // non-printable characters
+				return -1
+			}
+			return r
+		}, text)
+		r := regexp.MustCompile(`.{5,}\*([0-9]+)$`)
+		matches := r.FindStringSubmatch(text)
+		if len(matches) > 0 {
+			fmt.Println("Matched", text, matches[1])
+			text = "*3"
+		}
+
 		tokens = append(tokens, text)
+
+		pp.Print(tokens)
 
 		if len(tokens) > 0 && strings.HasPrefix(tokens[0], "*") {
 			requiredItems, _ := strconv.Atoi(tokens[0][1:])
