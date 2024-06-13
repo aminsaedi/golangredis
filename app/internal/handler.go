@@ -63,6 +63,9 @@ func Info(selection ...string) string {
 }
 
 func Replconf(args ...string) string {
+	if args[0] == "GETACK" {
+		return ToArray("REPLCONF", "ACK", "0")
+	}
 	return ToSimpleString("OK")
 }
 

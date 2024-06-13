@@ -11,7 +11,6 @@ import (
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
-	"github.com/k0kubun/pp"
 )
 
 type StartConfig struct {
@@ -43,11 +42,12 @@ func StartServer(config StartConfig) {
 			os.Exit(1)
 		}
 
-		go HandleRequestAsMaster(conn)
+		go HandleRequestAsMaster(conn, false)
 	}
 }
 
-func HandleRequestAsMaster(conn net.Conn) {
+func HandleRequestAsMaster(conn net.Conn, ignoreResponse bool) {
+
 	// defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
@@ -73,7 +73,7 @@ func HandleRequestAsMaster(conn net.Conn) {
 
 		tokens = append(tokens, text)
 
-		pp.Print(tokens)
+		// pp.Print(tokens)
 
 		if len(tokens) > 0 && strings.HasPrefix(tokens[0], "*") {
 			requiredItems, _ := strconv.Atoi(tokens[0][1:])
@@ -110,7 +110,11 @@ func HandleRequestAsMaster(conn net.Conn) {
 					fmt.Println("Connected slave: ", conn.RemoteAddr().String())
 				}
 
-				conn.Write([]byte(result))
+				fmt.Println("Command: ", command)
+				fmt.Println("Result: ", result)
+				if !ignoreResponse && command != "REPLCONF" {
+					conn.Write([]byte(result))
+				}
 
 				// reset tokens
 				tokens = make([]string, 0)
