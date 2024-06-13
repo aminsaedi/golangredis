@@ -26,9 +26,10 @@ func connectToMaster() {
 	}
 	for _, command := range commands {
 		conn.Write([]byte(command))
-		reply := make([]byte, 1024)
+		reply := make([]byte, 2048)
 		conn.Read(reply)
 	}
+	HandleRequestAsMaster(conn)
 
 }
 
