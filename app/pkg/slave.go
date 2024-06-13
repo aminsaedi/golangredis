@@ -29,7 +29,7 @@ func connectToMaster() {
 		reply := make([]byte, 256)
 		conn.Read(reply)
 	}
-	HandleRequestAsMaster(conn)
+	HandleRequestAsMaster(conn, false)
 
 }
 
