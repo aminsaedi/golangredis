@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"strings"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
@@ -47,64 +46,48 @@ func StartServer(config StartConfig) {
 
 func handleRequest(conn net.Conn) {
 	// defer conn.Close()
+	for {
+		scanner := bufio.NewScanner(conn)
+		isConnectionFromSlave := false
 
-	scanner := bufio.NewScanner(conn)
-	isConnectionFromSlave := false
-	var tokens []string
-	for scanner.Scan() {
-		text := scanner.Text()
-		tokens = append(tokens, text)
+		command, args := internal.ParseCommand(scanner)
 
-		if len(tokens) > 0 && strings.HasPrefix(tokens[0], "*") {
-			requiredItems, _ := strconv.Atoi(tokens[0][1:])
-			requiredItems = requiredItems*2 + 1
-			if len(tokens) == requiredItems {
-				// run command
-
-				var result string
-				command := strings.ToUpper(tokens[2])
-				switch command {
-				case "ECHO":
-					result = internal.Echo(tokens[4])
-				case "PING":
-					result = internal.Ping()
-				case "SET":
-					result = internal.Set(internal.SetConfig{
-						Key:        tokens[4],
-						Value:      tokens[6],
-						ExpiryType: internal.GetArayElement(tokens, 8, ""),
-						ExpiryIn:   internal.GetArayElement(tokens, 10, ""),
-					})
-				case "GET":
-					result = internal.Get(tokens[4])
-				case "INFO":
-					result = internal.Info(tokens[3:]...)
-				case "REPLCONF":
-					result = internal.Replconf(tokens[3:]...)
-				case "PSYNC":
-					result = internal.Psync(tokens[3:]...)
-					conn.Write([]byte(result))
-					result = internal.RDBFileToString("empty.rdb")
-					isConnectionFromSlave = true
-					// print connected slave address and port
-					fmt.Println("Connected slave: ", conn.RemoteAddr().String())
-				}
-
-				conn.Write([]byte(result))
-
-				// reset tokens
-				tokens = make([]string, 0)
-
-			}
-
+		var result string
+		switch command {
+		case "ECHO":
+			result = internal.Echo(args[0])
+		case "PING":
+			result = internal.Ping()
+		case "SET":
+			// result = internal.Set(internal.SetConfig{
+			// 	Key:        tokens[4],
+			// 	Value:      tokens[6],
+			// 	ExpiryType: internal.GetArayElement(tokens, 8, ""),
+			// 	ExpiryIn:   internal.GetArayElement(tokens, 10, ""),
+			// })
+		case "GET":
+			result = internal.Get(args[1])
+		case "INFO":
+			result = internal.Info(args[3:]...)
+		case "REPLCONF":
+			result = internal.Replconf(args[3:]...)
+		case "PSYNC":
+			result = internal.Psync(args[3:]...)
+			conn.Write([]byte(result))
+			result = internal.RDBFileToString("empty.rdb")
+			isConnectionFromSlave = true
+			// print connected slave address and port
+			fmt.Println("Connected slave: ", conn.RemoteAddr().String())
 		}
+
+		conn.Write([]byte(result))
+
 		if isConnectionFromSlave {
 			// conn.Write([]byte("amin"))
 			go PropogateToSlaves(conn)
 			fmt.Println("Breaking loop")
 			break
 		}
-
 	}
 
 }
