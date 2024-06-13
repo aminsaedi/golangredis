@@ -41,19 +41,22 @@ func StartServer(config StartConfig) {
 			os.Exit(1)
 		}
 
-		go handleRequest(conn)
+		go HandleRequestAsMaster(conn)
 	}
 }
 
-func handleRequest(conn net.Conn) {
+func HandleRequestAsMaster(conn net.Conn) {
 	// defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
 	isConnectionFromSlave := false
+
 	var tokens []string
 	for scanner.Scan() {
 		text := scanner.Text()
 		tokens = append(tokens, text)
+
+		fmt.Printf("Received: %s\n", text)
 
 		if len(tokens) > 0 && strings.HasPrefix(tokens[0], "*") {
 			requiredItems, _ := strconv.Atoi(tokens[0][1:])
