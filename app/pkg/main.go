@@ -43,11 +43,12 @@ func StartServer(config StartConfig) {
 			os.Exit(1)
 		}
 
-		go HandleRequestAsMaster(conn)
+		go HandleRequestAsMaster(conn, false)
 	}
 }
 
-func HandleRequestAsMaster(conn net.Conn) {
+func HandleRequestAsMaster(conn net.Conn, ignoreResponse bool) {
+
 	// defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
@@ -108,23 +109,24 @@ func HandleRequestAsMaster(conn net.Conn) {
 					isConnectionFromSlave = true
 					// print connected slave address and port
 					fmt.Println("Connected slave: ", conn.RemoteAddr().String())
-				}
 
-				conn.Write([]byte(result))
+				}
+				if !ignoreResponse {
+					conn.Write([]byte(result))
+				}
 
 				// reset tokens
 				tokens = make([]string, 0)
 
 			}
+			if isConnectionFromSlave {
+				// conn.Write([]byte("amin"))
+				go PropogateToSlaves(conn)
+				fmt.Println("Breaking loop")
+				break
+			}
 
-		}
-		if isConnectionFromSlave {
-			// conn.Write([]byte("amin"))
-			go PropogateToSlaves(conn)
-			fmt.Println("Breaking loop")
-			break
 		}
 
 	}
-
 }
