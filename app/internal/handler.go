@@ -65,7 +65,7 @@ func Info(selection ...string) string {
 func Replconf(args ...string) string {
 	fmt.Println("Replconf", args)
 	if args[1] == "GETACK" {
-		return ToArray("REPLCONF", "ACK", "0")
+		return ToArray("REPLCONF", "ACK", strconv.Itoa(config.PropogationStatus.TransferedBytes))
 	}
 	return ToSimpleString("OK")
 }
