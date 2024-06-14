@@ -69,6 +69,7 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 		matches := r.FindStringSubmatch(text)
 		if len(matches) > 0 {
 			// fmt.Println("Matched", text, matches[1])
+			tokens = make([]string, 0)
 			text = "*" + matches[1]
 		}
 
@@ -76,7 +77,7 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 		pp.Print(tokens)
 
-		if len(tokens) > 0 && strings.HasPrefix(tokens[0], "*") {
+		if len(tokens) > 0 && len(tokens[0]) > 1 && strings.HasPrefix(tokens[0], "*") {
 			requiredItems, _ := strconv.Atoi(tokens[0][1:])
 			requiredItems = requiredItems*2 + 1
 			if len(tokens) == requiredItems {
@@ -113,6 +114,9 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 				fmt.Println("Command: ", command)
 				fmt.Println("Result: ", result)
+				allTokens := len(strings.Join(tokens, "")) + (len(tokens) * 2)
+				fmt.Println("All tokens len: ", allTokens)
+				c.PropogationStatus.TransferedBytes += allTokens
 				if shouldSendResponse || command == "REPLCONF" {
 					conn.Write([]byte(result))
 				}
