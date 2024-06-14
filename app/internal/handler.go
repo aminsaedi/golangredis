@@ -84,5 +84,5 @@ func RDBFileToString(filePath string) string {
 
 func Wait(args ...string) string {
 	fmt.Println("Wait", args)
-	return ToSimpleInt(0)
+	return ToSimpleInt(c.AppConfig.ConnectedReplicasCount)
 }

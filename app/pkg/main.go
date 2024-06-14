@@ -128,6 +128,7 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 		}
 		if isConnectionFromSlave {
 			// conn.Write([]byte("amin"))
+			c.AppConfig.ConnectedReplicasCount++
 			go PropogateToSlaves(conn)
 			fmt.Println("Breaking loop")
 			break
