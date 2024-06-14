@@ -11,7 +11,6 @@ import (
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
-	"github.com/k0kubun/pp"
 )
 
 type StartConfig struct {
@@ -69,14 +68,15 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 		matches := r.FindStringSubmatch(text)
 		if len(matches) > 0 {
 			// fmt.Println("Matched", text, matches[1])
+			tokens = make([]string, 0)
 			text = "*" + matches[1]
 		}
 
 		tokens = append(tokens, text)
 
-		pp.Print(tokens)
+		// pp.Print(tokens)
 
-		if len(tokens) > 0 && strings.HasPrefix(tokens[0], "*") {
+		if len(tokens) > 0 && len(tokens[0]) > 1 && strings.HasPrefix(tokens[0], "*") {
 			requiredItems, _ := strconv.Atoi(tokens[0][1:])
 			requiredItems = requiredItems*2 + 1
 			if len(tokens) == requiredItems {
@@ -113,6 +113,9 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 				fmt.Println("Command: ", command)
 				fmt.Println("Result: ", result)
+				allTokens := strings.Join(tokens, "")
+				fmt.Println("All tokens: ", allTokens)
+				c.PropogationStatus.TransferedBytes += len(allTokens)
 				if shouldSendResponse || command == "REPLCONF" {
 					conn.Write([]byte(result))
 				}
