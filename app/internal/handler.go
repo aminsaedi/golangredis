@@ -81,3 +81,8 @@ func RDBFileToString(filePath string) string {
 	}
 	return "$" + fmt.Sprint(len(dat)) + "\r\n" + string(dat)
 }
+
+func Wait(args ...string) string {
+	fmt.Println("Wait", args)
+	return ":+0\r\n"
+}
