@@ -21,7 +21,8 @@ type sharedConfig struct {
 }
 
 type propogationStatus struct {
-	Commands []string
+	Commands        []string
+	TransferedBytes int
 }
 
 var PropogationStatus = propogationStatus{}
