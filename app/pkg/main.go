@@ -115,6 +115,8 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 				fmt.Println("Result: ", result)
 				if shouldSendResponse || command == "REPLCONF" {
 					conn.Write([]byte(result))
+					fmt.Println("Adding to total:", len(result))
+					c.PropogationStatus.TransferedBytes += len(result)
 				}
 
 				// reset tokens
