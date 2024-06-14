@@ -110,6 +110,8 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 					isConnectionFromSlave = true
 					// print connected slave address and port
 					fmt.Println("Connected slave: ", conn.RemoteAddr().String())
+				case "WAIT":
+					result = internal.Wait(tokens[3:]...)
 				}
 
 				totalTokenLength := len(strings.Join(tokens, "")) + (len(tokens) * 2)

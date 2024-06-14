@@ -43,3 +43,7 @@ func ToArray(input ...string) string {
 	}
 	return "*" + fmt.Sprint(len(input)) + "\r\n" + finalString
 }
+
+func ToSimpleInt(input int) string {
+	return ":" + fmt.Sprint(input) + "\r\n"
+}
