@@ -1,8 +1,10 @@
 package pkg
 
 import (
+	"bufio"
 	"fmt"
 	"net"
+	"regexp"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
@@ -35,8 +37,23 @@ func connectToMaster() {
 
 func PropogateToSlaves(conn net.Conn) {
 	propogated := make(map[string]struct{})
+
+	go func() {
+		reg := regexp.MustCompile(`ACK`)
+		scanner := bufio.NewScanner(conn)
+		for scanner.Scan() {
+			line := scanner.Text()
+			fmt.Printf("Line: %q\n", line)
+			if reg.MatchString(line) {
+				// atomic.AddInt32(&count, 1)
+				config.Counter.Start()
+				fmt.Println("Ooon", conn.RemoteAddr().String())
+				config.Counter.Increment()
+				break
+			}
+		}
+	}()
 	for {
-		time.Sleep(1 * time.Second)
 		for _, command := range config.PropogationStatus.Commands {
 			key := command + "__" + conn.RemoteAddr().String()
 
@@ -45,8 +62,10 @@ func PropogateToSlaves(conn net.Conn) {
 			}
 
 			conn.Write([]byte(command))
+
 			propogated[key] = struct{}{}
 		}
 
+		time.Sleep(50 * time.Millisecond)
 	}
 }

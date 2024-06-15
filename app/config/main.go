@@ -2,6 +2,8 @@ package config
 
 import (
 	"math/rand"
+	"net"
+	"sync"
 )
 
 func generateRandomString() string {
@@ -14,11 +16,11 @@ func generateRandomString() string {
 }
 
 type sharedConfig struct {
-	BindingPort            int
-	Replicaof              string
-	MasterReplId           string
-	MasterReplOffset       int
-	ConnectedReplicasCount int
+	BindingPort       int
+	Replicaof         string
+	MasterReplId      string
+	MasterReplOffset  int
+	ConnectedReplicas []net.Conn
 }
 
 type propogationStatus struct {
@@ -31,3 +33,33 @@ var PropogationStatus = propogationStatus{}
 var AppConfig = sharedConfig{
 	MasterReplId: generateRandomString(),
 }
+
+type CounterType struct {
+	mu        sync.Mutex
+	count     int
+	isStarted bool
+}
+
+func (c *CounterType) Increment() {
+	c.mu.Lock()
+	c.count++
+	c.mu.Unlock()
+}
+
+func (c *CounterType) GetCount() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.count
+}
+
+func (c *CounterType) Start() {
+	c.mu.Lock()
+	c.isStarted = true
+	c.mu.Unlock()
+}
+
+func (c *CounterType) GetStarted() bool {
+	return c.isStarted
+}
+
+var Counter = &CounterType{}
