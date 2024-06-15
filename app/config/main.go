@@ -14,11 +14,12 @@ func generateRandomString() string {
 }
 
 type sharedConfig struct {
-	BindingPort            int
-	Replicaof              string
-	MasterReplId           string
-	MasterReplOffset       int
-	ConnectedReplicasCount int
+	BindingPort               int
+	Replicaof                 string
+	MasterReplId              string
+	MasterReplOffset          int
+	ConnectedReplicasCount    int
+	FullyPropogatedReplicaIds []string
 }
 
 type propogationStatus struct {
