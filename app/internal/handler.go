@@ -2,12 +2,16 @@ package internal
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
+	"github.com/thoas/go-funk"
 )
 
 func Echo(value string) string {
@@ -63,7 +67,10 @@ func Info(selection ...string) string {
 }
 
 func Replconf(args ...string) string {
-	fmt.Println("Replconf", args)
+	fmt.Println("Replconf: ", args)
+	if args[1] == "ACK" {
+		fmt.Println("ALLLLLLL")
+	}
 	if args[1] == "GETACK" {
 		return ToArray("REPLCONF", "ACK", strconv.Itoa(config.PropogationStatus.TransferedBytes))
 	}
@@ -83,6 +90,41 @@ func RDBFileToString(filePath string) string {
 }
 
 func Wait(args ...string) string {
-	fmt.Println("Wait", args)
-	return ToSimpleInt(c.AppConfig.ConnectedReplicasCount)
+	fmt.Println("Wait: ", args)
+	var waitTimeInMs, leastFullyPropogatedReplicasCount int
+	// leastFullyPropogatedReplicasCount = c.AppConfig.ConnectedReplicasCount
+
+	var FullyPropogatedReplicaIds []string
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	time.Sleep(time.Duration(100) * time.Millisecond)
+	for _, replica := range c.AppConfig.ConnectedReplicas {
+		wg.Add(1)
+		go func(replica net.Conn) {
+			defer wg.Done()
+			replica.Write([]byte(ToArray("REPLCONF", "GETACK", "*")))
+			buff := make([]byte, 64)
+			replica.Read(buff)
+			if regexp.MustCompile(`ACK`).Match(buff) {
+				slaveId := replica.RemoteAddr().String()
+				mu.Lock()
+				if !funk.Contains(FullyPropogatedReplicaIds, slaveId) {
+					FullyPropogatedReplicaIds = append(FullyPropogatedReplicaIds, slaveId)
+				}
+				mu.Unlock()
+			}
+		}(replica)
+	}
+
+	wg.Wait()
+	if len(args) == 4 {
+		waitTimeInMs, _ = strconv.Atoi(args[3])
+		leastFullyPropogatedReplicasCount, _ = strconv.Atoi(args[1])
+	}
+	if len(FullyPropogatedReplicaIds) < leastFullyPropogatedReplicasCount {
+		time.Sleep(time.Duration(waitTimeInMs) * time.Millisecond)
+	}
+	return ToSimpleInt(len(FullyPropogatedReplicaIds))
+	// return ToSimpleInt(100)
 }
