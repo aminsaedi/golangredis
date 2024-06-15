@@ -2,6 +2,7 @@ package config
 
 import (
 	"math/rand"
+	"net"
 )
 
 func generateRandomString() string {
@@ -14,11 +15,12 @@ func generateRandomString() string {
 }
 
 type sharedConfig struct {
-	BindingPort            int
-	Replicaof              string
-	MasterReplId           string
-	MasterReplOffset       int
-	ConnectedReplicasCount int
+	BindingPort               int
+	Replicaof                 string
+	MasterReplId              string
+	MasterReplOffset          int
+	ConnectedReplicas         []net.Conn
+	FullyPropogatedReplicaIds []string
 }
 
 type propogationStatus struct {
