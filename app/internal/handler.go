@@ -83,6 +83,14 @@ func RDBFileToString(filePath string) string {
 }
 
 func Wait(args ...string) string {
-	fmt.Println("Wait", args)
-	return ToSimpleInt(c.AppConfig.ConnectedReplicasCount)
+	var waitTimeInMs, leastFullyPropogatedReplicasCount int
+	leastFullyPropogatedReplicasCount = c.AppConfig.ConnectedReplicasCount
+	if len(args) == 4 {
+		waitTimeInMs, _ = strconv.Atoi(args[1])
+		leastFullyPropogatedReplicasCount, _ = strconv.Atoi(args[3])
+	}
+	if c.AppConfig.FullyPropogatedReplicasCount < leastFullyPropogatedReplicasCount {
+		time.Sleep(time.Duration(waitTimeInMs) * time.Millisecond)
+	}
+	return ToSimpleInt(leastFullyPropogatedReplicasCount)
 }
