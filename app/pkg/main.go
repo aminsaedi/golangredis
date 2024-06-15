@@ -85,6 +85,7 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 				var result string
 				command := strings.ToUpper(tokens[2])
+				// fmt.Printf("Is slave: %v Command: %v Args: %v\n", !shouldSendResponse, command, tokens[3:])
 				switch command {
 				case "ECHO":
 					result = internal.Echo(tokens[4])
@@ -107,9 +108,10 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 					result = internal.Psync(tokens[3:]...)
 					conn.Write([]byte(result))
 					result = internal.RDBFileToString("empty.rdb")
+					// conn.Write([]byte(result))
+					// result = internal.ToArray("REPLCONF", "GETACK", "*")
 					isConnectionFromSlave = true
 					// print connected slave address and port
-					fmt.Println("Connected slave: ", conn.RemoteAddr().String())
 				case "WAIT":
 					result = internal.Wait(tokens[3:]...)
 				}
@@ -127,10 +129,9 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 		}
 		if isConnectionFromSlave {
-			// conn.Write([]byte("amin"))
+			// conn.Write([]byte(internal.ToArray("REPLCONF", "GETACK", "*")))
 			c.AppConfig.ConnectedReplicasCount++
 			go PropogateToSlaves(conn)
-			fmt.Println("Breaking loop")
 			break
 		}
 
