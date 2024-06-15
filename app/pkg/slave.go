@@ -5,8 +5,11 @@ import (
 	"net"
 	"time"
 
+	"math/rand"
+
 	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
+	"github.com/thoas/go-funk"
 )
 
 func connectToMaster() {
@@ -35,8 +38,22 @@ func connectToMaster() {
 
 func PropogateToSlaves(conn net.Conn) {
 	propogated := make(map[string]struct{})
+	slaveId := fmt.Sprint(rand.Int())
+	// fmt.Println("Propogating to slave: ", slaveId)
 	for {
-		time.Sleep(1 * time.Second)
+		// fmt.Printf("Propogated: %v\tTotal: %v\n", len(propogated), len(config.PropogationStatus.Commands))
+		if len(propogated) == len(config.PropogationStatus.Commands) {
+			// append the replicaId to config.AppConfig.FullyPropogatedReplicaIds if not already present
+			if !funk.ContainsString(config.AppConfig.FullyPropogatedReplicaIds, slaveId) {
+				// fmt.Println("Fully propogated to slave: ", slaveId)
+				config.AppConfig.FullyPropogatedReplicaIds = append(config.AppConfig.FullyPropogatedReplicaIds, slaveId)
+			}
+		} else {
+			// filter the replicaId from config.AppConfig.FullyPropogatedReplicaIds
+			config.AppConfig.FullyPropogatedReplicaIds = funk.FilterString(config.AppConfig.FullyPropogatedReplicaIds, func(replicaId string) bool {
+				return replicaId != slaveId
+			})
+		}
 		for _, command := range config.PropogationStatus.Commands {
 			key := command + "__" + conn.RemoteAddr().String()
 
@@ -45,8 +62,10 @@ func PropogateToSlaves(conn net.Conn) {
 			}
 
 			conn.Write([]byte(command))
+
 			propogated[key] = struct{}{}
 		}
 
+		time.Sleep(50 * time.Millisecond)
 	}
 }
