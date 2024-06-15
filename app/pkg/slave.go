@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
@@ -35,8 +36,20 @@ func connectToMaster() {
 
 func PropogateToSlaves(conn net.Conn) {
 	propogated := make(map[string]struct{})
+	// slaveId := fmt.Sprint(rand.Int())
+	// fmt.Println("Propogating to slave: ", slaveId)
 	for {
-		time.Sleep(1 * time.Second)
+
+		go func() {
+			buff := make([]byte, 64)
+			conn.Read(buff)
+			fmt.Println("Amin: ", string(buff))
+			// if buff includes ACK command then log "ALLLLLLL"
+			if regexp.MustCompile(`ACK`).Match(buff) {
+				fmt.Println("ALLLLLLL")
+			}
+		}()
+
 		for _, command := range config.PropogationStatus.Commands {
 			key := command + "__" + conn.RemoteAddr().String()
 
@@ -45,8 +58,10 @@ func PropogateToSlaves(conn net.Conn) {
 			}
 
 			conn.Write([]byte(command))
+
 			propogated[key] = struct{}{}
 		}
 
+		time.Sleep(50 * time.Millisecond)
 	}
 }
