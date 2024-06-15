@@ -3,11 +3,13 @@ package internal
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
+	"github.com/thoas/go-funk"
 )
 
 func Echo(value string) string {
@@ -63,7 +65,10 @@ func Info(selection ...string) string {
 }
 
 func Replconf(args ...string) string {
-	fmt.Println("Replconf", args)
+	fmt.Println("Replconf: ", args)
+	if args[1] == "ACK" {
+		fmt.Println("ALLLLLLL")
+	}
 	if args[1] == "GETACK" {
 		return ToArray("REPLCONF", "ACK", strconv.Itoa(config.PropogationStatus.TransferedBytes))
 	}
@@ -83,6 +88,39 @@ func RDBFileToString(filePath string) string {
 }
 
 func Wait(args ...string) string {
-	fmt.Println("Wait", args)
-	return ToSimpleInt(c.AppConfig.ConnectedReplicasCount)
+	fmt.Println("Wait: ", args)
+	var waitTimeInMs, leastFullyPropogatedReplicasCount int
+	// leastFullyPropogatedReplicasCount = c.AppConfig.ConnectedReplicasCount
+
+	time.Sleep(time.Duration(100) * time.Millisecond)
+	for _, replica := range c.AppConfig.ConnectedReplicas {
+		go func() {
+			replica.Write([]byte(ToArray("REPLCONF", "GETACK", "*")))
+			buff := make([]byte, 64)
+			replica.Read(buff)
+			slaveId := replica.RemoteAddr().String()
+			// fmt.Println("Wait: ", string(buff))
+
+			if regexp.MustCompile(`ACK`).Match(buff) {
+				// fmt.Printf("Slvae Id: %s, ACK: %s\n", slaveId, string(buff))
+				// config.AppConfig.FullyPropogatedReplicaIds = append(config.AppConfig.FullyPropogatedReplicaIds, slaveId)
+				// add slaveId to FullyPropogatedReplicaIds if it's not already there
+				if !funk.ContainsString(config.AppConfig.FullyPropogatedReplicaIds, slaveId) {
+					fmt.Printf("AminSaedi\n")
+					config.AppConfig.FullyPropogatedReplicaIds = append(config.AppConfig.FullyPropogatedReplicaIds, slaveId)
+				}
+			}
+
+		}()
+	}
+
+	if len(args) == 4 {
+		waitTimeInMs, _ = strconv.Atoi(args[3])
+		leastFullyPropogatedReplicasCount, _ = strconv.Atoi(args[1])
+	}
+	if len(c.AppConfig.FullyPropogatedReplicaIds) < leastFullyPropogatedReplicasCount {
+		time.Sleep(time.Duration(waitTimeInMs) * time.Millisecond)
+	}
+	return ToSimpleInt(len(c.AppConfig.FullyPropogatedReplicaIds))
+	// return ToSimpleInt(100)
 }
