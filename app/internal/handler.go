@@ -2,8 +2,12 @@ package internal
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"regexp"
 	"strconv"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
@@ -63,7 +67,10 @@ func Info(selection ...string) string {
 }
 
 func Replconf(args ...string) string {
-	fmt.Println("Replconf", args)
+	fmt.Println("Replconf: ", args)
+	if args[1] == "ACK" {
+		fmt.Println("ALLLLLLL")
+	}
 	if args[1] == "GETACK" {
 		return ToArray("REPLCONF", "ACK", strconv.Itoa(config.PropogationStatus.TransferedBytes))
 	}
@@ -83,6 +90,45 @@ func RDBFileToString(filePath string) string {
 }
 
 func Wait(args ...string) string {
-	fmt.Println("Wait", args)
-	return ToSimpleInt(c.AppConfig.ConnectedReplicasCount)
+	fmt.Println("Wait: ", args)
+	var waitTimeInMs, leastFullyPropogatedReplicasCount int
+	// leastFullyPropogatedReplicasCount = c.AppConfig.ConnectedReplicasCount
+
+	// var FullyPropogatedReplicaIds []string
+	// var mu sync.Mutex
+	var wg sync.WaitGroup
+	// ch := make(chan string, 50)
+	var count int32
+
+	time.Sleep(time.Duration(100) * time.Millisecond)
+	for _, replica := range c.AppConfig.ConnectedReplicas {
+		wg.Add(1)
+		go func(replica net.Conn) {
+			defer wg.Done()
+			replica.Write([]byte(ToArray("REPLCONF", "GETACK", "*")))
+			buff := make([]byte, 64)
+			replica.Read(buff)
+			if regexp.MustCompile(`ACK`).Match(buff) {
+				fmt.Println("ACK Received from: ", replica.RemoteAddr().String())
+				// slaveId := replica.RemoteAddr().String()
+				atomic.AddInt32(&count, 1)
+			}
+		}(replica)
+	}
+
+	fmt.Println("Waiting for all replicas to fully propogate")
+	wg.Wait()
+	fmt.Println("Finished waiting for all replicas to fully propogate")
+	if len(args) == 4 {
+		waitTimeInMs, _ = strconv.Atoi(args[3])
+		leastFullyPropogatedReplicasCount, _ = strconv.Atoi(args[1])
+	}
+	if int(count) < leastFullyPropogatedReplicasCount {
+		time.Sleep(time.Duration(waitTimeInMs) * time.Millisecond)
+	}
+
+	time.Sleep(time.Duration(100) * time.Millisecond)
+	fmt.Println("Sending: ", count)
+	return ToSimpleInt(int(count))
+	// return ToSimpleInt(100)
 }
