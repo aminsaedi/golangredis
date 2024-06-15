@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"time"
@@ -63,7 +64,10 @@ func Info(selection ...string) string {
 }
 
 func Replconf(args ...string) string {
-	fmt.Println("Replconf", args)
+	fmt.Println("Replconf: ", args)
+	if args[1] == "ACK" {
+		fmt.Println("ALLLLLLL")
+	}
 	if args[1] == "GETACK" {
 		return ToArray("REPLCONF", "ACK", strconv.Itoa(config.PropogationStatus.TransferedBytes))
 	}
@@ -83,6 +87,27 @@ func RDBFileToString(filePath string) string {
 }
 
 func Wait(args ...string) string {
-	fmt.Println("Wait", args)
-	return ToSimpleInt(c.AppConfig.ConnectedReplicasCount)
+	fmt.Println("Wait: ", args)
+	var waitTimeInMs, leastFullyPropogatedReplicasCount int
+
+	time.Sleep(time.Duration(50) * time.Millisecond)
+	for _, replica := range c.AppConfig.ConnectedReplicas {
+		go func(replica net.Conn) {
+			replica.Write([]byte(ToArray("REPLCONF", "GETACK", "*")))
+		}(replica)
+	}
+
+	// wg.Wait()
+	if len(args) == 4 {
+		waitTimeInMs, _ = strconv.Atoi(args[3])
+		leastFullyPropogatedReplicasCount, _ = strconv.Atoi(args[1])
+	}
+	if int(config.Counter.GetCount()) < leastFullyPropogatedReplicasCount {
+		time.Sleep(time.Duration(waitTimeInMs) * time.Millisecond)
+	}
+
+	time.Sleep(time.Duration(200) * time.Millisecond)
+	fmt.Println("Sending: ", config.Counter.GetCount())
+	return ToSimpleInt(config.Counter.GetCount())
+	// return ToSimpleInt(100)
 }
