@@ -35,8 +35,9 @@ func connectToMaster() {
 
 func PropogateToSlaves(conn net.Conn) {
 	propogated := make(map[string]struct{})
+
 	for {
-		time.Sleep(1 * time.Second)
+
 		for _, command := range config.PropogationStatus.Commands {
 			key := command + "__" + conn.RemoteAddr().String()
 
@@ -45,8 +46,10 @@ func PropogateToSlaves(conn net.Conn) {
 			}
 
 			conn.Write([]byte(command))
+
 			propogated[key] = struct{}{}
 		}
 
+		time.Sleep(50 * time.Millisecond)
 	}
 }
