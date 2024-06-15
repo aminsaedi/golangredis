@@ -11,7 +11,6 @@ import (
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
-	"github.com/k0kubun/pp"
 )
 
 type StartConfig struct {
@@ -75,7 +74,7 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 		tokens = append(tokens, text)
 
-		pp.Print(tokens)
+		// pp.Print(tokens)
 
 		if len(tokens) > 0 && len(tokens[0]) > 1 && strings.HasPrefix(tokens[0], "*") {
 			requiredItems, _ := strconv.Atoi(tokens[0][1:])
@@ -107,6 +106,8 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 					result = internal.Psync(tokens[3:]...)
 					conn.Write([]byte(result))
 					result = internal.RDBFileToString("empty.rdb")
+					conn.Write([]byte(result))
+					result = internal.ToArray("REPLCONF", "GETACK", "*")
 					isConnectionFromSlave = true
 					// print connected slave address and port
 					fmt.Println("Connected slave: ", conn.RemoteAddr().String())
