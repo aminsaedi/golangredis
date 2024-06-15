@@ -63,7 +63,10 @@ func Info(selection ...string) string {
 }
 
 func Replconf(args ...string) string {
-	fmt.Println("Replconf", args)
+	fmt.Println("Replconf: ", args)
+	if args[1] == "ACK" {
+		fmt.Println("ALLLLLLL")
+	}
 	if args[1] == "GETACK" {
 		return ToArray("REPLCONF", "ACK", strconv.Itoa(config.PropogationStatus.TransferedBytes))
 	}
@@ -83,6 +86,22 @@ func RDBFileToString(filePath string) string {
 }
 
 func Wait(args ...string) string {
-	fmt.Println("Wait", args)
-	return ToSimpleInt(c.AppConfig.ConnectedReplicasCount)
+	var waitTimeInMs, leastFullyPropogatedReplicasCount int
+	// leastFullyPropogatedReplicasCount = c.AppConfig.ConnectedReplicasCount
+
+	// for _, replica := range c.AppConfig.ConnectedReplicas {
+	// 	go func() {
+	// 		replica.Write([]byte(ToArray("REPLCONF", "GETACK", "*")))
+	// 	}()
+	// }
+
+	if len(args) == 4 {
+		waitTimeInMs, _ = strconv.Atoi(args[3])
+		leastFullyPropogatedReplicasCount, _ = strconv.Atoi(args[1])
+	}
+	if len(c.AppConfig.FullyPropogatedReplicaIds) < leastFullyPropogatedReplicasCount {
+		time.Sleep(time.Duration(waitTimeInMs) * time.Millisecond)
+	}
+	return ToSimpleInt(len(c.AppConfig.FullyPropogatedReplicaIds))
+	// return ToSimpleInt(100)
 }
