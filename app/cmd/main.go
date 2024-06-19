@@ -9,9 +9,11 @@ import (
 
 func Execute() {
 	var port int
-	var replicaof string
+	var replicaof, dir, dbfilename string
 	flag.IntVar(&port, "port", 6379, "Port to listen on")
 	flag.StringVar(&replicaof, "replicaof", "", "Replicate to another server")
+	flag.StringVar(&dir, "dir", "", "Directory to save data")
+	flag.StringVar(&dbfilename, "dbfilename", "", "Filename to save data")
 	flag.Parse()
 
 	// check replicaof pattern with regex
@@ -23,8 +25,10 @@ func Execute() {
 	}
 
 	startConfig := pkg.StartConfig{
-		Port:      port,
-		Replicaof: replicaof,
+		Port:       port,
+		Replicaof:  replicaof,
+		Dir:        dir,
+		Dbfilename: dbfilename,
 	}
 	pkg.StartServer(startConfig)
 }
