@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/codecrafters-io/redis-starter-go/app/config"
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
 )
 
-func Echo(value string) string {
+func Echo(args ...string) string {
+	value := args[1]
 	return ToBulkString(value)
 }
 
@@ -19,14 +19,21 @@ func Ping() string {
 	return ToSimpleString("PONG")
 }
 
-type SetConfig struct {
-	Key        string
-	Value      string
-	ExpiryType string
-	ExpiryIn   string
-}
+func Set(args ...string) string {
 
-func Set(config SetConfig) string {
+	type setConfig struct {
+		Key        string
+		Value      string
+		ExpiryType string
+		ExpiryIn   string
+	}
+
+	config := setConfig{
+		Key:        args[1],
+		Value:      args[3],
+		ExpiryType: GetArayElement(args, 5, ""),
+		ExpiryIn:   GetArayElement(args, 7, ""),
+	}
 
 	toSet := DataItem{
 		value: config.Value,
@@ -40,7 +47,8 @@ func Set(config SetConfig) string {
 	return ToSimpleString("OK")
 }
 
-func Get(key string) string {
+func Get(args ...string) string {
+	key := args[1]
 	item, ok := GetStorageItem(key)
 	if ok {
 		return ToBulkString(item.value)
@@ -65,13 +73,13 @@ func Info(selection ...string) string {
 
 func Replconf(args ...string) string {
 	if args[1] == "GETACK" {
-		return ToArray("REPLCONF", "ACK", strconv.Itoa(config.PropogationStatus.TransferedBytes))
+		return ToArray("REPLCONF", "ACK", strconv.Itoa(c.PropogationStatus.TransferedBytes))
 	}
 	return ToSimpleString("OK")
 }
 
 func Psync(args ...string) string {
-	return ToSimpleString("FULLRESYNC " + c.AppConfig.MasterReplId + " " + fmt.Sprint(config.AppConfig.MasterReplOffset))
+	return ToSimpleString("FULLRESYNC " + c.AppConfig.MasterReplId + " " + fmt.Sprint(c.AppConfig.MasterReplOffset))
 }
 
 func RDBFileToString(filePath string) string {
@@ -97,14 +105,14 @@ func Wait(args ...string) string {
 		waitTimeInMs, _ = strconv.Atoi(args[3])
 		leastFullyPropogatedReplicasCount, _ = strconv.Atoi(args[1])
 	}
-	if int(config.Counter.GetCount()) < leastFullyPropogatedReplicasCount {
+	if int(c.Counter.GetCount()) < leastFullyPropogatedReplicasCount {
 		time.Sleep(time.Duration(waitTimeInMs) * time.Millisecond)
 	}
 
 	time.Sleep(time.Duration(200) * time.Millisecond)
-	fmt.Println("Sending: ", config.Counter.GetCount())
-	if config.Counter.GetStarted() {
-		return ToSimpleInt(config.Counter.GetCount())
+	fmt.Println("Sending: ", c.Counter.GetCount())
+	if c.Counter.GetStarted() {
+		return ToSimpleInt(c.Counter.GetCount())
 	}
 	return ToSimpleInt(len(c.AppConfig.ConnectedReplicas))
 }

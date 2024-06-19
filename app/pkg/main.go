@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
-	"github.com/codecrafters-io/redis-starter-go/app/internal"
+	i "github.com/codecrafters-io/redis-starter-go/app/internal"
 )
 
 type StartConfig struct {
@@ -50,6 +50,18 @@ func StartServer(config StartConfig) {
 	}
 }
 
+func getCommand(tokens []string) string {
+	if len(tokens) > 0 && len(tokens[0]) > 1 && strings.HasPrefix(tokens[0], "*") {
+		requiredItems, _ := strconv.Atoi(tokens[0][1:])
+		requiredItems = requiredItems*2 + 1
+		if len(tokens) == requiredItems {
+
+			return strings.ToUpper(tokens[2])
+		}
+	}
+	return ""
+}
+
 func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 	// defer conn.Close()
@@ -80,62 +92,46 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 		// pp.Print(tokens)
 
-		if len(tokens) > 0 && len(tokens[0]) > 1 && strings.HasPrefix(tokens[0], "*") {
-			requiredItems, _ := strconv.Atoi(tokens[0][1:])
-			requiredItems = requiredItems*2 + 1
-			if len(tokens) == requiredItems {
-				// run command
-
-				var result string
-				command := strings.ToUpper(tokens[2])
-				// fmt.Printf("Is slave: %v Command: %v Args: %v\n", !shouldSendResponse, command, tokens[3:])
-				switch command {
-				case "ECHO":
-					result = internal.Echo(tokens[4])
-				case "PING":
-					result = internal.Ping()
-				case "SET":
-					result = internal.Set(internal.SetConfig{
-						Key:        tokens[4],
-						Value:      tokens[6],
-						ExpiryType: internal.GetArayElement(tokens, 8, ""),
-						ExpiryIn:   internal.GetArayElement(tokens, 10, ""),
-					})
-				case "GET":
-					result = internal.Get(tokens[4])
-				case "INFO":
-					result = internal.Info(tokens[3:]...)
-				case "REPLCONF":
-					result = internal.Replconf(tokens[3:]...)
-				case "PSYNC":
-					result = internal.Psync(tokens[3:]...)
-					conn.Write([]byte(result))
-					result = internal.RDBFileToString("empty.rdb")
-					// conn.Write([]byte(result))
-					// result = internal.ToArray("REPLCONF", "GETACK", "*")
-					isConnectionFromSlave = true
-					// print connected slave address and port
-				case "WAIT":
-					result = internal.Wait(tokens[3:]...)
-				case "CONFIG":
-					result = internal.Config(tokens[3:]...)
-				}
-
-				totalTokenLength := len(strings.Join(tokens, "")) + (len(tokens) * 2)
-				c.PropogationStatus.TransferedBytes += totalTokenLength
-				if shouldSendResponse || command == "REPLCONF" {
-					conn.Write([]byte(result))
-				}
-
-				// reset tokens
-				tokens = make([]string, 0)
-
-			}
-
+		var result string
+		command := getCommand(tokens)
+		if command == "" {
+			continue
 		}
+		// fmt.Printf("Is slave: %v Command: %v Args: %v\n", !shouldSendResponse, command, tokens[3:])
+		switch command {
+		case "ECHO":
+			result = i.Echo(tokens[3:]...)
+		case "PING":
+			result = i.Ping()
+		case "SET":
+			result = i.Set(tokens[3:]...)
+		case "GET":
+			result = i.Get(tokens[3:]...)
+		case "INFO":
+			result = i.Info(tokens[3:]...)
+		case "REPLCONF":
+			result = i.Replconf(tokens[3:]...)
+		case "PSYNC":
+			result = i.Psync(tokens[3:]...)
+			conn.Write([]byte(result))
+			result = i.RDBFileToString("empty.rdb")
+			isConnectionFromSlave = true
+		case "WAIT":
+			result = i.Wait(tokens[3:]...)
+		case "CONFIG":
+			result = i.Config(tokens[3:]...)
+		}
+
+		totalTokenLength := len(strings.Join(tokens, "")) + (len(tokens) * 2)
+		c.PropogationStatus.TransferedBytes += totalTokenLength
+		if shouldSendResponse || command == "REPLCONF" {
+			conn.Write([]byte(result))
+		}
+
+		// reset tokens
+		tokens = make([]string, 0)
+
 		if isConnectionFromSlave {
-			// conn.Write([]byte(internal.ToArray("REPLCONF", "GETACK", "*")))
-			c.AppConfig.ConnectedReplicas = append(c.AppConfig.ConnectedReplicas, conn)
 			go PropogateToSlaves(conn)
 			break
 		}
