@@ -43,11 +43,9 @@ func PropogateToSlaves(conn net.Conn) {
 		scanner := bufio.NewScanner(conn)
 		for scanner.Scan() {
 			line := scanner.Text()
-			fmt.Printf("Line: %q\n", line)
 			if reg.MatchString(line) {
 				// atomic.AddInt32(&count, 1)
 				config.Counter.Start()
-				fmt.Println("Ooon", conn.RemoteAddr().String())
 				config.Counter.Increment()
 				break
 			}

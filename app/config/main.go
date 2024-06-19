@@ -21,6 +21,8 @@ type sharedConfig struct {
 	MasterReplId      string
 	MasterReplOffset  int
 	ConnectedReplicas []net.Conn
+	Dir               string
+	Dbfilename        string
 }
 
 type propogationStatus struct {

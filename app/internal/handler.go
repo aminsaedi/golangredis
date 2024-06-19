@@ -64,10 +64,6 @@ func Info(selection ...string) string {
 }
 
 func Replconf(args ...string) string {
-	fmt.Println("Replconf: ", args)
-	if args[1] == "ACK" {
-		fmt.Println("ALLLLLLL")
-	}
 	if args[1] == "GETACK" {
 		return ToArray("REPLCONF", "ACK", strconv.Itoa(config.PropogationStatus.TransferedBytes))
 	}
@@ -87,7 +83,6 @@ func RDBFileToString(filePath string) string {
 }
 
 func Wait(args ...string) string {
-	fmt.Println("Wait: ", args)
 	var waitTimeInMs, leastFullyPropogatedReplicasCount int
 
 	time.Sleep(time.Duration(50) * time.Millisecond)
@@ -111,8 +106,18 @@ func Wait(args ...string) string {
 	if config.Counter.GetStarted() {
 		return ToSimpleInt(config.Counter.GetCount())
 	}
-	fmt.Printf("Else block\n")
 	return ToSimpleInt(len(c.AppConfig.ConnectedReplicas))
-	// return ToSimpleInt(config.Counter.GetCount())
-	// return ToSimpleInt(100)
+}
+
+func Config(args ...string) string {
+	if len(args) != 4 {
+		return ToSimpleError("UNKNOWN")
+	}
+	if args[1] == "GET" && args[3] == "dir" {
+		return ToArray("dir", c.AppConfig.Dir)
+	}
+	if args[1] == "GET" && args[3] == "dbfilename" {
+		return ToArray("dbfilename", c.AppConfig.Dbfilename)
+	}
+	return ToSimpleError("UNKNOWN")
 }
