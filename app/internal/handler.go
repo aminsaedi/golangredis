@@ -71,8 +71,14 @@ func Info(selection ...string) string {
 	return ToBulkStringFromMap(result)
 }
 
-func Replconf(args ...string) string {
+func Replconf(conn net.Conn, args ...string) string {
+	if args[1] == "ACK" {
+		fmt.Println("Here: Incrementing counter", args, conn.RemoteAddr().String())
+		c.Counter.Start()
+		c.Counter.Increment(conn.RemoteAddr().String())
+	}
 	if args[1] == "GETACK" {
+		fmt.Println("Amin")
 		return ToArray("REPLCONF", "ACK", strconv.Itoa(c.PropogationStatus.TransferedBytes))
 	}
 	return ToSimpleString("OK")

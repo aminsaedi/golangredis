@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"math/rand"
 	"net"
 	"sync"
@@ -38,20 +39,26 @@ var AppConfig = sharedConfig{
 
 type CounterType struct {
 	mu        sync.Mutex
-	count     int
+	ids       []string
 	isStarted bool
 }
 
-func (c *CounterType) Increment() {
+func (c *CounterType) Increment(id string) {
 	c.mu.Lock()
-	c.count++
+	c.ids = append(c.ids, id)
 	c.mu.Unlock()
 }
 
 func (c *CounterType) GetCount() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.count
+	// return number of unique ids
+	unique := make(map[string]bool)
+	for _, id := range c.ids {
+		unique[id] = true
+	}
+	fmt.Println("ids", c.ids, "unique", unique)
+	return len(unique)
 }
 
 func (c *CounterType) Start() {
