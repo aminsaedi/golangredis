@@ -122,7 +122,7 @@ func HandleRequestAsMaster(conn net.Conn, shouldWriteResult bool) {
 		case "INFO":
 			result = i.Info(tokens[3:]...)
 		case "REPLCONF":
-			result = i.Replconf(tokens[3:]...)
+			result = i.Replconf(conn, tokens[3:]...)
 		case "PSYNC":
 			result = i.Psync(tokens[3:]...)
 			conn.Write([]byte(result))
@@ -134,12 +134,13 @@ func HandleRequestAsMaster(conn net.Conn, shouldWriteResult bool) {
 			result = i.Config(tokens[3:]...)
 		}
 
+		if shouldWriteResult || (command == "REPLCONF" && tokens[4] == "GETACK") {
+			conn.Write([]byte(result))
+		}
+
 		updateTransferedBytes(tokens)
 		tokens = make([]string, 0)
 
-		if shouldWriteResult || command == "REPLCONF" {
-			conn.Write([]byte(result))
-		}
 		if isConnectionFromSlave {
 			go PropogateToSlaves(conn)
 			break
