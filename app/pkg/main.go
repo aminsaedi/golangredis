@@ -14,14 +14,18 @@ import (
 )
 
 type StartConfig struct {
-	Port      int
-	Replicaof string
+	Port       int
+	Replicaof  string
+	Dir        string
+	Dbfilename string
 }
 
 func StartServer(config StartConfig) {
 
 	c.AppConfig.Replicaof = config.Replicaof
 	c.AppConfig.BindingPort = config.Port
+	c.AppConfig.Dir = config.Dir
+	c.AppConfig.Dbfilename = config.Dbfilename
 
 	if c.AppConfig.Replicaof != "" {
 		go connectToMaster()
@@ -113,6 +117,8 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 					// print connected slave address and port
 				case "WAIT":
 					result = internal.Wait(tokens[3:]...)
+				case "CONFIG":
+					result = internal.Config(tokens[3:]...)
 				}
 
 				totalTokenLength := len(strings.Join(tokens, "")) + (len(tokens) * 2)
