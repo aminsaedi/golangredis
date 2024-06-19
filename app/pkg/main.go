@@ -62,6 +62,24 @@ func getCommand(tokens []string) string {
 	return ""
 }
 
+func sanitizeText(text string, tokens []string) (sanitizedText string, sanitizedTokens []string) {
+	sanitizedTokens = tokens
+	sanitizedText = strings.Map(func(r rune) rune {
+		if r < 32 || r > 126 { // non-printable characters
+			return -1
+		}
+		return r
+	}, text)
+	r := regexp.MustCompile(`.{5,}\*([0-9]+)$`)
+	matches := r.FindStringSubmatch(text)
+	if len(matches) > 0 {
+		// fmt.Println("Matched", text, matches[1])
+		sanitizedTokens = make([]string, 0)
+		sanitizedText = "*" + matches[1]
+	}
+	return sanitizedText, sanitizedTokens
+}
+
 func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 	// defer conn.Close()
@@ -73,20 +91,9 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 	for scanner.Scan() {
 		text := scanner.Text()
 
+		text, tokens = sanitizeText(text, tokens)
+
 		// ignore binary data
-		text = strings.Map(func(r rune) rune {
-			if r < 32 || r > 126 { // non-printable characters
-				return -1
-			}
-			return r
-		}, text)
-		r := regexp.MustCompile(`.{5,}\*([0-9]+)$`)
-		matches := r.FindStringSubmatch(text)
-		if len(matches) > 0 {
-			// fmt.Println("Matched", text, matches[1])
-			tokens = make([]string, 0)
-			text = "*" + matches[1]
-		}
 
 		tokens = append(tokens, text)
 
