@@ -38,20 +38,20 @@ var AppConfig = sharedConfig{
 
 type CounterType struct {
 	mu        sync.Mutex
-	count     int
+	ids       []string
 	isStarted bool
 }
 
-func (c *CounterType) Increment() {
+func (c *CounterType) Increment(id string) {
 	c.mu.Lock()
-	c.count++
+	c.ids = append(c.ids, id)
 	c.mu.Unlock()
 }
 
 func (c *CounterType) GetCount() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.count
+	return len(c.ids)
 }
 
 func (c *CounterType) Start() {
