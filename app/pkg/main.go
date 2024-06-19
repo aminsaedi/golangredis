@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
-	"github.com/codecrafters-io/redis-starter-go/app/internal"
+	i "github.com/codecrafters-io/redis-starter-go/app/internal"
 )
 
 type StartConfig struct {
@@ -84,41 +84,32 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 			requiredItems, _ := strconv.Atoi(tokens[0][1:])
 			requiredItems = requiredItems*2 + 1
 			if len(tokens) == requiredItems {
-				// run command
 
 				var result string
 				command := strings.ToUpper(tokens[2])
 				// fmt.Printf("Is slave: %v Command: %v Args: %v\n", !shouldSendResponse, command, tokens[3:])
 				switch command {
 				case "ECHO":
-					result = internal.Echo(tokens[4])
+					result = i.Echo(tokens[3:]...)
 				case "PING":
-					result = internal.Ping()
+					result = i.Ping()
 				case "SET":
-					result = internal.Set(internal.SetConfig{
-						Key:        tokens[4],
-						Value:      tokens[6],
-						ExpiryType: internal.GetArayElement(tokens, 8, ""),
-						ExpiryIn:   internal.GetArayElement(tokens, 10, ""),
-					})
+					result = i.Set(tokens[3:]...)
 				case "GET":
-					result = internal.Get(tokens[4])
+					result = i.Get(tokens[4])
 				case "INFO":
-					result = internal.Info(tokens[3:]...)
+					result = i.Info(tokens[3:]...)
 				case "REPLCONF":
-					result = internal.Replconf(tokens[3:]...)
+					result = i.Replconf(tokens[3:]...)
 				case "PSYNC":
-					result = internal.Psync(tokens[3:]...)
+					result = i.Psync(tokens[3:]...)
 					conn.Write([]byte(result))
-					result = internal.RDBFileToString("empty.rdb")
-					// conn.Write([]byte(result))
-					// result = internal.ToArray("REPLCONF", "GETACK", "*")
+					result = i.RDBFileToString("empty.rdb")
 					isConnectionFromSlave = true
-					// print connected slave address and port
 				case "WAIT":
-					result = internal.Wait(tokens[3:]...)
+					result = i.Wait(tokens[3:]...)
 				case "CONFIG":
-					result = internal.Config(tokens[3:]...)
+					result = i.Config(tokens[3:]...)
 				}
 
 				totalTokenLength := len(strings.Join(tokens, "")) + (len(tokens) * 2)
@@ -134,8 +125,6 @@ func HandleRequestAsMaster(conn net.Conn, shouldSendResponse bool) {
 
 		}
 		if isConnectionFromSlave {
-			// conn.Write([]byte(internal.ToArray("REPLCONF", "GETACK", "*")))
-			c.AppConfig.ConnectedReplicas = append(c.AppConfig.ConnectedReplicas, conn)
 			go PropogateToSlaves(conn)
 			break
 		}

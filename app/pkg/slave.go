@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/config"
+	c "github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/internal"
 )
 
@@ -36,6 +37,7 @@ func connectToMaster() {
 }
 
 func PropogateToSlaves(conn net.Conn) {
+	c.AppConfig.ConnectedReplicas = append(c.AppConfig.ConnectedReplicas, conn)
 	propogated := make(map[string]struct{})
 
 	go func() {
