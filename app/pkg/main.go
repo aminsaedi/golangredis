@@ -110,36 +110,38 @@ func HandleRequestAsMaster(conn net.Conn, shouldWriteResult bool) {
 		}
 
 		var result string
+		args := tokens[3:]
 		switch command {
 		case "ECHO":
-			result = i.Echo(tokens[3:]...)
+			result = i.Echo(args...)
 		case "PING":
 			result = i.Ping()
 		case "SET":
-			result = i.Set(tokens[3:]...)
+			result = i.Set(args...)
 		case "GET":
-			result = i.Get(tokens[3:]...)
+			result = i.Get(args...)
 		case "INFO":
-			result = i.Info(tokens[3:]...)
+			result = i.Info(args...)
 		case "REPLCONF":
-			result = i.Replconf(tokens[3:]...)
+			result = i.Replconf(conn, args...)
 		case "PSYNC":
-			result = i.Psync(tokens[3:]...)
+			result = i.Psync(args...)
 			conn.Write([]byte(result))
 			result = i.RDBFileToString("empty.rdb")
 			isConnectionFromSlave = true
 		case "WAIT":
-			result = i.Wait(tokens[3:]...)
+			result = i.Wait(args...)
 		case "CONFIG":
-			result = i.Config(tokens[3:]...)
+			result = i.Config(args...)
+		}
+
+		if shouldWriteResult || (command == "REPLCONF" && args[1] == "GETACK") {
+			conn.Write([]byte(result))
 		}
 
 		updateTransferedBytes(tokens)
 		tokens = make([]string, 0)
 
-		if shouldWriteResult || command == "REPLCONF" {
-			conn.Write([]byte(result))
-		}
 		if isConnectionFromSlave {
 			go PropogateToSlaves(conn)
 			break

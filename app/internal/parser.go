@@ -14,9 +14,6 @@ func ToBulkString(input ...string) string {
 			totalLength += len(v) + 2
 		}
 	}
-	fmt.Println("Total length: ", totalLength)
-	fmt.Printf("Final string: %q\n", finalString)
-	fmt.Printf("Out: %q", "$"+fmt.Sprint(totalLength)+"\r\n"+finalString)
 	return "$" + fmt.Sprint(totalLength) + "\r\n" + finalString
 }
 
