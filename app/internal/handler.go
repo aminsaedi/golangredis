@@ -71,7 +71,11 @@ func Info(selection ...string) string {
 	return ToBulkStringFromMap(result)
 }
 
-func Replconf(args ...string) string {
+func Replconf(conn net.Conn, args ...string) string {
+	if args[1] == "ACK" {
+		c.UniqeCounter.Start()
+		c.UniqeCounter.Increment(conn.RemoteAddr().String())
+	}
 	if args[1] == "GETACK" {
 		return ToArray("REPLCONF", "ACK", strconv.Itoa(c.PropogationStatus.TransferedBytes))
 	}
@@ -105,14 +109,14 @@ func Wait(args ...string) string {
 		waitTimeInMs, _ = strconv.Atoi(args[3])
 		leastFullyPropogatedReplicasCount, _ = strconv.Atoi(args[1])
 	}
-	if int(c.Counter.GetCount()) < leastFullyPropogatedReplicasCount {
+	if int(c.UniqeCounter.GetCount()) < leastFullyPropogatedReplicasCount {
 		time.Sleep(time.Duration(waitTimeInMs) * time.Millisecond)
 	}
 
 	time.Sleep(time.Duration(200) * time.Millisecond)
-	fmt.Println("Sending: ", c.Counter.GetCount())
-	if c.Counter.GetStarted() {
-		return ToSimpleInt(c.Counter.GetCount())
+	fmt.Println("Sending: ", c.UniqeCounter.GetCount())
+	if c.UniqeCounter.GetStarted() {
+		return ToSimpleInt(c.UniqeCounter.GetCount())
 	}
 	return ToSimpleInt(len(c.AppConfig.ConnectedReplicas))
 }
