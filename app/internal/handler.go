@@ -72,6 +72,11 @@ func Info(selection ...string) string {
 }
 
 func Replconf(args ...string) string {
+	if args[1] == "ACK" {
+		fmt.Println("Here: Incrementing counter", args)
+		c.Counter.Start()
+		c.Counter.Increment()
+	}
 	if args[1] == "GETACK" {
 		return ToArray("REPLCONF", "ACK", strconv.Itoa(c.PropogationStatus.TransferedBytes))
 	}
@@ -112,7 +117,7 @@ func Wait(args ...string) string {
 	time.Sleep(time.Duration(200) * time.Millisecond)
 	fmt.Println("Sending: ", c.Counter.GetCount())
 	if c.Counter.GetStarted() {
-		return ToSimpleInt(c.Counter.GetCount())
+		return ToSimpleInt(c.Counter.GetCount() - 1)
 	}
 	return ToSimpleInt(len(c.AppConfig.ConnectedReplicas))
 }
