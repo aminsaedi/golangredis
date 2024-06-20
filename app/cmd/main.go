@@ -4,7 +4,8 @@ import (
 	"flag"
 	"regexp"
 
-	"github.com/codecrafters-io/redis-starter-go/app/pkg"
+	c "github.com/codecrafters-io/redis-starter-go/app/config"
+	p "github.com/codecrafters-io/redis-starter-go/app/pkg"
 )
 
 func Execute() {
@@ -24,11 +25,16 @@ func Execute() {
 		}
 	}
 
-	startConfig := pkg.StartConfig{
+	c.AppConfig.Replicaof = replicaof
+	c.AppConfig.BindingPort = port
+	c.AppConfig.Dir = dir
+	c.AppConfig.Dbfilename = dbfilename
+
+	startConfig := p.StartConfig{
 		Port:       port,
 		Replicaof:  replicaof,
 		Dir:        dir,
 		Dbfilename: dbfilename,
 	}
-	pkg.StartServer(startConfig)
+	p.StartServer(startConfig)
 }
