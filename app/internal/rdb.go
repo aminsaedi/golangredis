@@ -14,5 +14,5 @@ func ReadRdbFile() {
 		return
 	}
 	fmt.Println("Reading RDB file: ", path)
-	fmt.Println(string(data))
+	fmt.Println(data)
 }
