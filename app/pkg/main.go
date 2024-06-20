@@ -21,11 +21,7 @@ type StartConfig struct {
 }
 
 func StartServer(config StartConfig) {
-
-	c.AppConfig.Replicaof = config.Replicaof
-	c.AppConfig.BindingPort = config.Port
-	c.AppConfig.Dir = config.Dir
-	c.AppConfig.Dbfilename = config.Dbfilename
+	i.ReadRdbFile()
 
 	if c.AppConfig.Replicaof != "" {
 		go connectToMaster()
