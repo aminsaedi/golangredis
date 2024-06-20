@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"fmt"
+	"encoding/hex"
 	"os"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
@@ -13,6 +13,7 @@ func ReadRdbFile() {
 	if err != nil {
 		return
 	}
-	fmt.Println("Reading RDB file: ", path)
-	fmt.Println(string(data))
+	d := hex.Dumper(os.Stdout)
+	d.Write(data)
+	d.Close()
 }
