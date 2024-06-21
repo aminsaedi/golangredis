@@ -27,3 +27,13 @@ func GetStorageItem(key string) (DataItem, bool) {
 func SetStorageItem(key string, item DataItem) {
 	storage[key] = item
 }
+
+func GetAllKeys() []string {
+	keys := make([]string, 0)
+	for key, item := range storage {
+		if item.isValid() {
+			keys = append(keys, key)
+		}
+	}
+	return keys
+}
