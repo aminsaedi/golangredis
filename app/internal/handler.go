@@ -133,3 +133,8 @@ func Config(args ...string) string {
 	}
 	return ToSimpleError("UNKNOWN")
 }
+
+func Keys(args ...string) string {
+	keys := GetAllKeys()
+	return ToArray(keys...)
+}
