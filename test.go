@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -62,7 +63,12 @@ func main() {
 	// dataBaseSection = [][]byte{{0xfe, 0x00, 0xfb, 0x01, 0x00, 0x00, 0x09, 0x62, 0x6c, 0x75, 0x62, 0x65, 0x72, 0x72, 0x79, 0x0a, 0x73, 0x74, 0x72, 0x61, 0x77, 0x62, 0x65, 0x72, 0x72, 0x79}}
 
 	// fe00fb0400000a73747261776265727279066f72616e6765000970696e656170706c650970696e656170706c65000662616e616e61056d616e676f00056170706c650a73747261776265727279
-	dataBaseSection = [][]byte{{0xfe, 0x00, 0xfb, 0x04, 0x00, 0x00, 0x0a, 0x73, 0x74, 0x72, 0x61, 0x77, 0x62, 0x65, 0x72, 0x72, 0x79, 0x06, 0x6f, 0x72, 0x61, 0x6e, 0x67, 0x65, 0x50, 0x00, 0x09, 0x70, 0x69, 0x6e, 0x65, 0x61, 0x70, 0x70, 0x6c, 0x65, 0x09, 0x70, 0x69, 0x6e, 0x65, 0x61, 0x70, 0x70, 0x6c, 0x65, 0x00, 0x06, 0x62, 0x61, 0x6e, 0x61, 0x6e, 0x61, 0x05, 0x6d, 0x61, 0x6e, 0x67, 0x6f, 0x00, 0x05, 0x61, 0x70, 0x70, 0x6c, 0x65, 0x0a, 0x73, 0x74, 0x72, 0x61, 0x77, 0x62, 0x65, 0x72, 0x72, 0x79}}
+	// dataBaseSection = [][]byte{{0xfe, 0x00, 0xfb, 0x04, 0x00, 0x00, 0x0a, 0x73, 0x74, 0x72, 0x61, 0x77, 0x62, 0x65, 0x72, 0x72, 0x79, 0x06, 0x6f, 0x72, 0x61, 0x6e, 0x67, 0x65, 0x50, 0x00, 0x09, 0x70, 0x69, 0x6e, 0x65, 0x61, 0x70, 0x70, 0x6c, 0x65, 0x09, 0x70, 0x69, 0x6e, 0x65, 0x61, 0x70, 0x70, 0x6c, 0x65, 0x00, 0x06, 0x62, 0x61, 0x6e, 0x61, 0x6e, 0x61, 0x05, 0x6d, 0x61, 0x6e, 0x67, 0x6f, 0x00, 0x05, 0x61, 0x70, 0x70, 0x6c, 0x65, 0x0a, 0x73, 0x74, 0x72, 0x61, 0x77, 0x62, 0x65, 0x72, 0x72, 0x79}}
+
+	fakeStringInput := "fe00fb0404fc000c288ac701000000056170706c6509626c75656265727279fc000c288ac70100000004706561720662616e616e61fc009cef127e0100000009726173706265727279056772617065fc000c288ac701000000066f72616e6765066f72616e6765"
+
+	decoded, _ := hex.DecodeString(fakeStringInput)
+	dataBaseSection = [][]byte{decoded}
 
 	fmt.Println("Meta data")
 	for _, meta := range metaData {
@@ -77,33 +83,77 @@ func main() {
 		fmt.Printf(" - %c - i:%d\n", data, index)
 	}
 
+	// totalSize := int(dataBaseSection[0][3])
+	withExpiryItemSize := int(dataBaseSection[0][4])
+
 	keyValues := make(map[string]string)
 
-	i := 5
-	for {
-		fmt.Println("index", i)
+	if withExpiryItemSize == 0 {
+		i := 5
+		for {
 
-		keySize := int(dataBaseSection[0][i+1])
-		fmt.Println("Key size", keySize, " Key index", i+1)
-		valueSize := int(dataBaseSection[0][i+2+keySize])
-		fmt.Println("Value size", valueSize, " Value index", i+2+keySize)
+			keySize := int(dataBaseSection[0][i+1])
+			fmt.Println("Key size", keySize, " Key index", i+1)
+			valueSize := int(dataBaseSection[0][i+2+keySize])
+			fmt.Println("Value size", valueSize, " Value index", i+2+keySize)
 
-		key := dataBaseSection[0][i+2 : i+2+keySize]
-		value := dataBaseSection[0][i+3+keySize : i+3+keySize+valueSize]
+			key := dataBaseSection[0][i+2 : i+2+keySize]
+			value := dataBaseSection[0][i+3+keySize : i+3+keySize+valueSize]
 
-		fmt.Print("Key: ", string(key))
-		fmt.Println(" -- Value:", string(value))
+			fmt.Print("Key: ", string(key))
+			fmt.Println(" -- Value:", string(value))
 
-		keyValues[string(key)] = string(value)
+			keyValues[string(key)] = string(value)
 
-		// find index of next 0x00
-		nextNull := slices.Index(dataBaseSection[0][i+3+keySize+valueSize:], 0x00)
-		if nextNull == -1 {
-			break
+			// find index of next 0x00
+			nextNull := slices.Index(dataBaseSection[0][i+3+keySize+valueSize:], 0x00)
+			if nextNull == -1 {
+				break
+			}
+			i += 3 + keySize + valueSize + nextNull
+			if i >= len(dataBaseSection[0]) {
+				break
+			}
+
 		}
-		i += 3 + keySize + valueSize + nextNull
-		if i >= len(dataBaseSection[0]) {
-			break
+	} else {
+		i := 5
+		for {
+
+			fmt.Println("index", i)
+
+			firstByte := dataBaseSection[0][i]
+
+			// expiry in Unix time milliseconds
+			if firstByte == 0xfc {
+				// next 8 bytes are expiry time
+				expiryTime := dataBaseSection[0][i+1 : i+9]
+				fmt.Println("Expiry time", binary.LittleEndian.Uint64(expiryTime))
+				i += 9
+			}
+			keySize := int(dataBaseSection[0][i+1])
+			fmt.Println("Key size", keySize, " Key index", i+1)
+			valueSize := int(dataBaseSection[0][i+2+keySize])
+			fmt.Println("Value size", valueSize, " Value index", i+2+keySize)
+
+			key := dataBaseSection[0][i+2 : i+2+keySize]
+			value := dataBaseSection[0][i+3+keySize : i+3+keySize+valueSize]
+
+			fmt.Print("Key: ", string(key))
+			fmt.Println(" -- Value:", string(value))
+
+			keyValues[string(key)] = string(value)
+
+			// find index of next 0x00
+			nextNull := slices.Index(dataBaseSection[0][i+3+keySize+valueSize:], 0x00)
+			if nextNull == -1 {
+				break
+			}
+			i += 2 + keySize + valueSize + nextNull
+			if i >= len(dataBaseSection[0]) {
+				break
+			}
+
 		}
 	}
 
