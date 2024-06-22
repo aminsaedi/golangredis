@@ -154,7 +154,6 @@ func Xadd(args ...string) string {
 	streamKey := args[1]
 	entryId := args[3]
 	fields := args[5:]
-	fmt.Println("XADD", streamKey, entryId, fields)
 
 	dataItems := make([]DataItem, 0)
 
@@ -166,6 +165,9 @@ func Xadd(args ...string) string {
 	}
 
 	stream := GetOrCreateStream(streamKey)
-	stream.addEntry(entryId, dataItems)
+	ok, err := AddEntryToStream(stream, entryId, dataItems)
+	if !ok {
+		return ToSimpleError(err.Error())
+	}
 	return ToSimpleString(entryId)
 }
