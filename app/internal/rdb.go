@@ -23,18 +23,18 @@ func ReadRdbFile() {
 		return
 	}
 
-	metaData := make([][]byte, 0)
+	// metaData := make([][]byte, 0)
 
-	for i := len(rdbMagicNumber); i < len(byteData); i++ {
-		if byteData[i] == 0xfa {
-			ending := slices.Index(byteData[i+1:], 0xfa)
-			if ending == -1 {
-				ending = slices.Index(byteData[i+1:], 0xfe)
-			}
-			metaData = append(metaData, byteData[i:i+ending])
-			i += ending
-		}
-	}
+	// for i := len(rdbMagicNumber); i < len(byteData); i++ {
+	// 	if byteData[i] == 0xfa {
+	// 		ending := slices.Index(byteData[i+1:], 0xfa)
+	// 		if ending == -1 {
+	// 			ending = slices.Index(byteData[i+1:], 0xfe)
+	// 		}
+	// 		metaData = append(metaData, byteData[i:i+ending])
+	// 		i += ending
+	// 	}
+	// }
 
 	dataBaseSection := make([][]byte, 0)
 
@@ -49,10 +49,10 @@ func ReadRdbFile() {
 		}
 	}
 
-	fmt.Println("Meta data")
-	for _, meta := range metaData {
-		fmt.Println(hex.EncodeToString(meta))
-	}
+	// fmt.Println("Meta data")
+	// for _, meta := range metaData {
+	// 	fmt.Println(hex.EncodeToString(meta))
+	// }
 	fmt.Println("Data base section")
 	for _, data := range dataBaseSection {
 		fmt.Println(hex.EncodeToString(data))
