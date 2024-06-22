@@ -166,6 +166,9 @@ func Xadd(args ...string) string {
 	}
 
 	stream := GetOrCreateStream(streamKey)
-	stream.addEntry(entryId, dataItems)
+	ok, err := stream.addEntry(entryId, dataItems)
+	if !ok {
+		return ToSimpleError(err.Error())
+	}
 	return ToSimpleString(entryId)
 }

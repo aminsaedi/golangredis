@@ -1,6 +1,9 @@
 package internal
 
 import (
+	"errors"
+	"strconv"
+	"strings"
 	"time"
 
 	t "github.com/codecrafters-io/redis-starter-go/app/tools"
@@ -16,7 +19,8 @@ type DataItem struct {
 }
 
 type StreamItem struct {
-	id string
+	key      string
+	entryIds []string
 }
 
 var plainStorage = make(map[string]DataItem)
@@ -29,15 +33,22 @@ func (di *DataItem) isValid() bool {
 	return di.validTill.After(time.Now())
 }
 
-func (si *StreamItem) addEntry(entryId string, dateItems []DataItem) {
+func (si *StreamItem) addEntry(entryId string, dateItems []DataItem) (ok bool, err error) {
 
 	for _, item := range dateItems {
 		item.entryId = entryId
-		item.streamId = si.id
-		item.id = si.id + "_" + entryId
+		item.streamId = si.key
+		item.id = si.key + "_" + entryId
+
+		isValid := isEntryIdsValid(si.key)
+
+		if !isValid {
+			return false, errors.New("ERR The ID specified in XADD is equal or smaller than the target stream top item")
+		}
 
 		SetStorageItem(item.id, item)
 	}
+	return true, nil
 }
 
 func GetStorageItem(key string) (DataItem, bool) {
@@ -68,14 +79,14 @@ func GetAllKeys() []string {
 	return keys
 }
 
-func GetOrCreateStream(streamId string) StreamItem {
-	item, ok := streamStorage[streamId]
+func GetOrCreateStream(streamKey string) StreamItem {
+	item, ok := streamStorage[streamKey]
 	if !ok {
-		if streamId == "" {
-			streamId = t.GenerateRandomString()
+		if streamKey == "" {
+			streamKey = t.GenerateRandomString()
 		}
-		item = StreamItem{id: streamId}
-		streamStorage[streamId] = item
+		item = StreamItem{key: streamKey}
+		streamStorage[streamKey] = item
 	}
 	return item
 }
@@ -88,4 +99,41 @@ func IsStorageKeyValid(key string) bool {
 func IsStreamKeyValid(streamKey string) bool {
 	_, ok := streamStorage[streamKey]
 	return ok
+}
+
+func isEntryIdsValid(streamKey string) bool {
+	stream, ok := streamStorage[streamKey]
+	if !ok {
+		return false
+	}
+	timestampMap := make(map[string][]int)
+
+	// Iterate over the array to split and group by timestamp
+	for _, item := range stream.entryIds {
+		parts := strings.Split(item, "-")
+		if len(parts) != 2 {
+			// Invalid format, skip this item or handle error
+			continue
+		}
+		timestamp := parts[0]
+		seqNum, err := strconv.Atoi(parts[1])
+		if err != nil {
+			// Invalid sequence number, skip this item or handle error
+			continue
+		}
+
+		// Add sequence number to the corresponding timestamp group
+		timestampMap[timestamp] = append(timestampMap[timestamp], seqNum)
+	}
+
+	// Check if sequence numbers in each group are incremental
+	for _, seqNums := range timestampMap {
+		for i := 1; i < len(seqNums); i++ {
+			if seqNums[i] <= seqNums[i-1] {
+				return false
+			}
+		}
+	}
+
+	return true
 }
