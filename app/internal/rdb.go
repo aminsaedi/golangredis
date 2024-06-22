@@ -63,19 +63,32 @@ func ReadRdbFile() {
 		fmt.Printf(" - %c - i:%d\n", data, index)
 	}
 
-	for i := 6; i < len(dataBaseSection[0]); i++ {
-		fmt.Println("i", i)
-		keySize := int(dataBaseSection[0][i])
-		fmt.Println("Key size", keySize)
-		key := dataBaseSection[0][i+1 : i+1+keySize]
-		fmt.Println("Key", string(key))
-		valueSize := int(dataBaseSection[0][i+keySize+1])
-		fmt.Println("Value size", valueSize)
-		value := dataBaseSection[0][i+keySize+2 : i+2+keySize+valueSize]
-		fmt.Println("Value", string(value))
-		i += keySize + valueSize + 1
+	i := 5
+	for {
+		fmt.Println("index", i)
+
+		keySize := int(dataBaseSection[0][i+1])
+		fmt.Println("Key size", keySize, " Key index", i+1)
+		valueSize := int(dataBaseSection[0][i+2+keySize])
+		fmt.Println("Value size", valueSize, " Value index", i+2+keySize)
+
+		key := dataBaseSection[0][i+2 : i+2+keySize]
+		value := dataBaseSection[0][i+3+keySize : i+3+keySize+valueSize]
+
+		fmt.Print("Key: ", string(key))
+		fmt.Println(" -- Value:", string(value))
 
 		SetStorageItem(string(key), DataItem{value: string(value)})
+
+		// find index of next 0x00
+		nextNull := slices.Index(dataBaseSection[0][i+3+keySize+valueSize:], 0x00)
+		if nextNull == -1 {
+			break
+		}
+		i += 3 + keySize + valueSize + nextNull
+		if i >= len(dataBaseSection[0]) {
+			break
+		}
 	}
 
 }
