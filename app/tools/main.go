@@ -1,6 +1,11 @@
 package tools
 
-import "math/rand"
+import (
+	"errors"
+	"math/rand"
+	"strconv"
+	"strings"
+)
 
 func GetArayElement[T any](arr []T, index int, defaultValue T) T {
 	if index >= 0 && index < len(arr) {
@@ -17,4 +22,12 @@ func GenerateRandomString() string {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+func GetTimeStampFromEntryId(entryId string) (int64, error) {
+	splited := strings.Split(entryId, "_")
+	if len(splited) == 2 {
+		return strconv.ParseInt(splited[1], 10, 64)
+	}
+	return 0, errors.New("invalid entryId")
 }
