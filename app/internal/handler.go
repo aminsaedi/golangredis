@@ -147,3 +147,11 @@ func Type(args ...string) string {
 	}
 	return ToSimpleString("none")
 }
+
+func Xadd(args ...string) string {
+	streamKey := args[1]
+	entriesId := args[3]
+	fields := args[5:]
+	fmt.Println("XADD", streamKey, entriesId, fields)
+	return ToSimpleString("0-1")
+}
