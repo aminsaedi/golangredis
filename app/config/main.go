@@ -2,19 +2,11 @@ package config
 
 import (
 	"fmt"
-	"math/rand"
 	"net"
 	"sync"
-)
 
-func generateRandomString() string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, 40)
-	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
-	}
-	return string(b)
-}
+	t "github.com/codecrafters-io/redis-starter-go/app/tools"
+)
 
 type sharedConfig struct {
 	BindingPort       int
@@ -34,7 +26,7 @@ type propogationStatus struct {
 var PropogationStatus = propogationStatus{}
 
 var AppConfig = sharedConfig{
-	MasterReplId: generateRandomString(),
+	MasterReplId: t.GenerateRandomString(),
 }
 
 type CounterType struct {
