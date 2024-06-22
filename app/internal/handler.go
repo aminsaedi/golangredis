@@ -141,9 +141,30 @@ func Keys(args ...string) string {
 
 func Type(args ...string) string {
 	key := args[1]
-	_, ok := GetStorageItem(key)
-	if ok {
+	if IsStorageKeyValid(key) {
 		return ToSimpleString("string")
+	} else if IsStreamKeyValid(key) {
+		return ToSimpleString("stream")
 	}
 	return ToSimpleString("none")
+}
+
+func Xadd(args ...string) string {
+	streamKey := args[1]
+	entryId := args[3]
+	fields := args[5:]
+	fmt.Println("XADD", streamKey, entryId, fields)
+
+	dataItems := make([]DataItem, 0)
+
+	for i := 0; i < len(fields); i += 3 {
+		dataItems = append(dataItems, DataItem{
+			key:   fields[i],
+			value: fields[i+2],
+		})
+	}
+
+	stream := GetOrCreateStream(streamKey)
+	stream.addEntry(entryId, dataItems)
+	return ToSimpleString(entryId)
 }
