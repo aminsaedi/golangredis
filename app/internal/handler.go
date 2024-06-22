@@ -138,3 +138,12 @@ func Keys(args ...string) string {
 	keys := GetAllKeys()
 	return ToArray(keys...)
 }
+
+func Type(args ...string) string {
+	key := args[1]
+	_, ok := GetStorageItem(key)
+	if ok {
+		return ToSimpleString("string")
+	}
+	return ToSimpleString("none")
+}
