@@ -8,6 +8,7 @@ import (
 	"time"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
+	t "github.com/codecrafters-io/redis-starter-go/app/tools"
 )
 
 func Echo(args ...string) string {
@@ -31,8 +32,8 @@ func Set(args ...string) string {
 	config := setConfig{
 		Key:        args[1],
 		Value:      args[3],
-		ExpiryType: GetArayElement(args, 5, ""),
-		ExpiryIn:   GetArayElement(args, 7, ""),
+		ExpiryType: t.GetArayElement(args, 5, ""),
+		ExpiryIn:   t.GetArayElement(args, 7, ""),
 	}
 
 	toSet := DataItem{
