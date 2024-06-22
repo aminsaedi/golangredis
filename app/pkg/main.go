@@ -131,6 +131,8 @@ func HandleRequestAsMaster(conn net.Conn, shouldWriteResult bool) {
 			result = i.Config(args...)
 		case "KEYS":
 			result = i.Keys(args...)
+		case "TYPE":
+			result = i.Type(args...)
 		}
 
 		if shouldWriteResult || (command == "REPLCONF" && args[1] == "GETACK") {
