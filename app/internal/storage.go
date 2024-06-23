@@ -183,6 +183,10 @@ func NormalizeEntryId(entryId string, stream StreamItem) (updatedEntryId string)
 
 	updatedEntryId = entryId
 
+	if entryId == "*" {
+		return strconv.Itoa(int(time.Now().UnixMilli())) + "-0"
+	}
+
 	splited := strings.Split(entryId, "-")
 	timePart := splited[0]
 	seqPart := splited[1]
