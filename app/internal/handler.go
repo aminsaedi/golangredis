@@ -172,5 +172,5 @@ func Xadd(args ...string) string {
 	if !ok {
 		return ToSimpleError(err.Error())
 	}
-	return ToSimpleString(entryId)
+	return ToBulkString(entryId)
 }
