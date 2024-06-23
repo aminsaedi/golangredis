@@ -165,6 +165,9 @@ func Xadd(args ...string) string {
 	}
 
 	stream := GetOrCreateStream(streamKey)
+
+	entryId = NormalizeEntryId(entryId, stream)
+
 	ok, err := AddEntryToStream(stream, entryId, dataItems)
 	if !ok {
 		return ToSimpleError(err.Error())
