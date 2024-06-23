@@ -3,6 +3,11 @@ package internal
 import "fmt"
 
 func ToBulkString(input ...string) string {
+
+	if len(input) == 1 && input[0] == "" {
+		return "$-1\r\n"
+	}
+
 	// return "$" + fmt.Sprint(len(input)) + "\r\n" + input + "\r\n"
 	totalLength := 0
 	finalString := ""
@@ -30,7 +35,7 @@ func ToSimpleString(input string) string {
 }
 
 func ToSimpleError(input string) string {
-	return "$" + input + "\r\n"
+	return "-" + input + "\r\n"
 }
 
 func ToArray(input ...string) string {
