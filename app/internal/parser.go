@@ -30,7 +30,7 @@ func ToSimpleString(input string) string {
 }
 
 func ToSimpleError(input string) string {
-	return "$" + input + "\r\n"
+	return "-" + input + "\r\n"
 }
 
 func ToArray(input ...string) string {
