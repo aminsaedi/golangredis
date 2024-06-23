@@ -3,6 +3,7 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -55,6 +56,20 @@ func (si *StreamItem) addEntry(entryId string, dataItems []DataItem) (ok bool, e
 		SetStorageItem(item.id, item)
 	}
 	return true, nil
+}
+
+func (si *StreamItem) getSequenceNumbersByTime(timestamp string) []int {
+	seqNumbers := make([]int, 0)
+	for _, entryId := range si.entryIds {
+		parts := strings.Split(entryId, "-")
+		if parts[0] == timestamp {
+			seqNum, _ := strconv.Atoi(parts[1])
+			seqNumbers = append(seqNumbers, seqNum)
+		}
+	}
+	// sort the sequence numbers in ascending order
+	sort.Ints(seqNumbers)
+	return seqNumbers
 }
 
 func GetStorageItem(key string) (DataItem, bool) {
@@ -162,4 +177,28 @@ func AddEntryToStream(stream StreamItem, entryId string, dataItems []DataItem) (
 	ok, err = stream.addEntry(entryId, dataItems)
 	streamStorage[stream.key] = stream
 	return ok, err
+}
+
+func NormalizeEntryId(entryId string, stream StreamItem) (updatedEntryId string) {
+
+	updatedEntryId = entryId
+
+	splited := strings.Split(entryId, "-")
+	timePart := splited[0]
+	seqPart := splited[1]
+
+	if seqPart == "*" {
+		allSequences := stream.getSequenceNumbersByTime(timePart)
+		if len(allSequences) == 0 {
+			if timePart == "0" {
+				updatedEntryId = "0-1"
+			} else {
+				updatedEntryId = timePart + "-0"
+			}
+		} else {
+			updatedEntryId = timePart + "-" + strconv.Itoa(allSequences[len(allSequences)-1]+1)
+		}
+	}
+
+	return updatedEntryId
 }
