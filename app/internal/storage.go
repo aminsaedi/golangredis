@@ -112,6 +112,44 @@ func GetOrCreateStream(streamKey string) StreamItem {
 	return item
 }
 
+func GetStreamEntries(stream StreamItem, start string, end string) []string {
+	entries := make([]string, 0)
+	startIndex := -1
+	endIndex := -1
+
+	if start == "-" {
+		startIndex = 0
+	} else {
+		for i, entryId := range stream.entryIds {
+			if strings.HasPrefix(entryId, start) {
+				startIndex = i
+				break
+			}
+		}
+	}
+
+	if end == "+" {
+		endIndex = len(stream.entryIds) - 1
+	} else {
+		for i, entryId := range stream.entryIds {
+			if strings.HasPrefix(entryId, end) {
+				endIndex = i
+				break
+			}
+		}
+	}
+
+	if startIndex == -1 || endIndex == -1 {
+		return entries
+	}
+
+	for i := startIndex; i <= endIndex; i++ {
+		entries = append(entries, stream.entryIds[i])
+	}
+
+	return entries
+}
+
 func IsStorageKeyValid(key string) bool {
 	_, ok := plainStorage[key]
 	return ok
