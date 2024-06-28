@@ -112,6 +112,51 @@ func GetOrCreateStream(streamKey string) StreamItem {
 	return item
 }
 
+func GetStreamDataItemsInRange(stream StreamItem, start string, end string) []DataItem {
+	entries := make([]DataItem, 0)
+	startIndex := -1
+	endIndex := -1
+
+	if start == "-" {
+		startIndex = 0
+	} else {
+		for i, entryId := range stream.entryIds {
+			if strings.HasPrefix(entryId, start) {
+				startIndex = i
+				break
+			}
+		}
+	}
+
+	if end == "+" {
+		endIndex = len(stream.entryIds) - 1
+	} else {
+		for i, entryId := range stream.entryIds {
+			if strings.HasPrefix(entryId, end) {
+				endIndex = i
+				break
+			}
+		}
+	}
+
+	fmt.Println("startIndex:", startIndex, "endIndex:", endIndex)
+
+	if startIndex == -1 || endIndex == -1 {
+		return entries
+	}
+
+	for i := startIndex; i <= endIndex; i++ {
+		entryId := stream.entryIds[i]
+		for _, item := range plainStorage {
+			if item.streamId == stream.key && item.entryId == entryId {
+				entries = append(entries, item)
+			}
+		}
+	}
+
+	return entries
+}
+
 func IsStorageKeyValid(key string) bool {
 	_, ok := plainStorage[key]
 	return ok
@@ -145,9 +190,6 @@ func isEntryIdsValid(entryIds []string) (bool, error) {
 
 		timestampMap[timestamp] = append(timestampMap[timestamp], seqNum)
 	}
-
-	fmt.Println("entryIds", entryIds)
-	fmt.Println("timestampMap", timestampMap)
 
 	// Check if timestamp groups are incremental
 	for i := 1; i < len(entryIds); i++ {
