@@ -174,3 +174,19 @@ func Xadd(args ...string) string {
 	}
 	return ToBulkString(entryId)
 }
+
+func Xrange(args ...string) string {
+	streamKey := args[1]
+	start := args[3]
+	end := args[5]
+
+	stream := GetOrCreateStream(streamKey)
+	entries := GetStreamDataItemsInRange(stream, start, end)
+
+	retsult := make([]string, 0)
+	for _, entry := range entries {
+		retsult = append(retsult, ToArray(entry.entryId, entry.value))
+	}
+	return ToArray(retsult...)
+
+}
