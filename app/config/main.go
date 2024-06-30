@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"net"
 	"sync"
 
@@ -49,7 +48,6 @@ func (c *CounterType) GetCount() int {
 	for _, id := range c.ids {
 		unique[id] = true
 	}
-	fmt.Println("ids", c.ids, "unique", unique)
 	return len(unique)
 }
 

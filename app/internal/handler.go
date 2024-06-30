@@ -220,41 +220,66 @@ func Xrange(args ...string) string {
 }
 
 func Xread(args ...string) string {
-	streamKey := args[3]
-	entryId := args[5]
+	fmt.Println("XREAD", args)
 
-	stream := GetOrCreateStream(streamKey)
+	getValue := func(streamKey string, entryId string) string {
+		stream := GetOrCreateStream(streamKey)
 
-	index := slices.Index(stream.entryIds, entryId)
+		index := slices.Index(stream.entryIds, entryId)
 
-	if index == -1 {
-		index = 0
+		if index == -1 {
+			index = 0
+		}
+
+		result := make([]string, 0)
+
+		result = append(result, streamKey)
+
+		entryIds := stream.entryIds[index:]
+
+		for _, entryId := range entryIds {
+			temp := make([]string, 0)
+			temp = append(temp, entryId)
+
+			temp2 := make([]string, 0)
+			item, ok := GetStorageItem(streamKey + "_" + entryId)
+			if ok {
+				temp2 = append(temp2, item.key)
+				temp2 = append(temp2, item.value)
+			}
+
+			temp2Str := ToArray(temp2...)
+			temp = append(temp, temp2Str)
+			result = append(result, ToArray(ToArray(temp...)))
+
+		}
+
+		resultStr := ToArray(result...)
+
+		return resultStr
 	}
 
 	result := make([]string, 0)
 
-	result = append(result, streamKey)
+	if len(args) == 6 {
+		streamKey := args[3]
+		entryId := args[5]
 
-	entryIds := stream.entryIds[index:]
+		result = append(result, getValue(streamKey, entryId))
+	} else if len(args) == 10 {
+		streamKey1 := args[3]
+		entryId1 := args[7]
 
-	for _, entryId := range entryIds {
-		temp := make([]string, 0)
-		temp = append(temp, entryId)
+		streamKey2 := args[5]
+		entryId2 := args[9]
 
-		temp2 := make([]string, 0)
-		item, ok := GetStorageItem(streamKey + "_" + entryId)
-		if ok {
-			temp2 = append(temp2, item.key)
-			temp2 = append(temp2, item.value)
-		}
-
-		temp2Str := ToArray(temp2...)
-		temp = append(temp, temp2Str)
-		result = append(result, ToArray(ToArray(temp...)))
-
+		result = append(result, getValue(streamKey1, entryId1))
+		result = append(result, getValue(streamKey2, entryId2))
 	}
 
-	finalResult := ToArray(ToArray(result...))
+	fmt.Printf("Result: %q\n", result)
+
+	finalResult := ToArray(result...)
 
 	return finalResult
 }
