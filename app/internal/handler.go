@@ -220,41 +220,56 @@ func Xrange(args ...string) string {
 }
 
 func Xread(args ...string) string {
-	streamKey := args[3]
-	entryId := args[5]
+	fmt.Println("XREAD", args)
 
-	stream := GetOrCreateStream(streamKey)
+	getValue := func(streamKey string, entryId string) string {
+		stream := GetOrCreateStream(streamKey)
 
-	index := slices.Index(stream.entryIds, entryId)
+		index := slices.Index(stream.entryIds, entryId)
 
-	if index == -1 {
-		index = 0
+		if index == -1 {
+			index = 0
+		}
+
+		result := make([]string, 0)
+
+		result = append(result, streamKey)
+
+		entryIds := stream.entryIds[index:]
+
+		for _, entryId := range entryIds {
+			temp := make([]string, 0)
+			temp = append(temp, entryId)
+
+			temp2 := make([]string, 0)
+			item, ok := GetStorageItem(streamKey + "_" + entryId)
+			if ok {
+				temp2 = append(temp2, item.key)
+				temp2 = append(temp2, item.value)
+			}
+
+			temp2Str := ToArray(temp2...)
+			temp = append(temp, temp2Str)
+			result = append(result, ToArray(ToArray(temp...)))
+
+		}
+
+		resultStr := ToArray(result...)
+
+		return resultStr
 	}
 
 	result := make([]string, 0)
 
-	result = append(result, streamKey)
-
-	entryIds := stream.entryIds[index:]
-
-	for _, entryId := range entryIds {
-		temp := make([]string, 0)
-		temp = append(temp, entryId)
-
-		temp2 := make([]string, 0)
-		item, ok := GetStorageItem(streamKey + "_" + entryId)
-		if ok {
-			temp2 = append(temp2, item.key)
-			temp2 = append(temp2, item.value)
-		}
-
-		temp2Str := ToArray(temp2...)
-		temp = append(temp, temp2Str)
-		result = append(result, ToArray(ToArray(temp...)))
-
+	// streamKey := args[3]
+	// entryId := args[5]
+	for i := 3; i < len(args); i += 2 {
+		streamKey := args[i]
+		entryId := args[i+1]
+		result = append(result, getValue(streamKey, entryId))
 	}
 
-	finalResult := ToArray(ToArray(result...))
+	finalResult := ToArray(result...)
 
 	return finalResult
 }
