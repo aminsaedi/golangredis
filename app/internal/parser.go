@@ -1,6 +1,9 @@
 package internal
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
 func ToBulkString(input ...string) string {
 
@@ -40,8 +43,14 @@ func ToSimpleError(input string) string {
 
 func ToArray(input ...string) string {
 	finalString := ""
+	arrayPattern := regexp.MustCompile(`\*([0-9]+)\r\n`)
 	for _, v := range input {
-		finalString += "$" + fmt.Sprint(len(v)) + "\r\n" + v + "\r\n"
+		if arrayPattern.MatchString(v) {
+			fmt.Println("Matched")
+			finalString += v
+		} else {
+			finalString += "$" + fmt.Sprint(len(v)) + "\r\n" + v + "\r\n"
+		}
 	}
 	return "*" + fmt.Sprint(len(input)) + "\r\n" + finalString
 }
