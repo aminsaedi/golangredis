@@ -2,7 +2,6 @@ package internal
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,7 +38,6 @@ func (si *StreamItem) addEntry(entryId string, dataItems []DataItem) (ok bool, e
 
 	// add entryId to the stream entryIds
 
-	fmt.Println("entryIds__:", si.entryIds, "___", entryId)
 	isValid, err := isEntryIdsValid(append(si.entryIds, entryId))
 
 	if !isValid {
