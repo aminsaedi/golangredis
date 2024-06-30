@@ -174,3 +174,17 @@ func Xadd(args ...string) string {
 	}
 	return ToBulkString(entryId)
 }
+
+func Xrange(args ...string) string {
+	streamKey := args[1]
+	start := args[3]
+	end := args[5]
+
+	stream := GetOrCreateStream(streamKey)
+
+	fmt.Println("Stream: ", stream)
+	fmt.Println("Start: ", start)
+	fmt.Println("End: ", end)
+
+	return ToSimpleError("Not implemented")
+}
