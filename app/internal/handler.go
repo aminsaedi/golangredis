@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 	"strconv"
 	"time"
 
@@ -173,4 +174,35 @@ func Xadd(args ...string) string {
 		return ToSimpleError(err.Error())
 	}
 	return ToBulkString(entryId)
+}
+
+func Xrange(args ...string) string {
+	streamKey := args[1]
+	start := args[3]
+	end := args[5]
+
+	stream := GetOrCreateStream(streamKey)
+
+	firstIndex := slices.Index(stream.entryIds, start)
+	lastIndex := slices.Index(stream.entryIds, end)
+
+	entryIds := stream.entryIds[firstIndex : lastIndex+1]
+
+	fmt.Println("Stream: ", stream)
+	fmt.Println("Start: ", start)
+	fmt.Println("End: ", end)
+	fmt.Println("EntryIds: ", entryIds)
+
+	dataItems := make([]DataItem, 0)
+
+	for _, entryId := range entryIds {
+		item, ok := GetStorageItem(streamKey + "_" + entryId)
+		if ok {
+			dataItems = append(dataItems, item)
+		}
+	}
+
+	fmt.Println("DataItems: ", dataItems)
+
+	return ToSimpleError("Not implemented")
 }
