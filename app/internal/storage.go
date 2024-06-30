@@ -146,9 +146,6 @@ func isEntryIdsValid(entryIds []string) (bool, error) {
 		timestampMap[timestamp] = append(timestampMap[timestamp], seqNum)
 	}
 
-	fmt.Println("entryIds", entryIds)
-	fmt.Println("timestampMap", timestampMap)
-
 	// Check if timestamp groups are incremental
 	for i := 1; i < len(entryIds); i++ {
 		prevTime := strings.Split(entryIds[i-1], "-")[0]
