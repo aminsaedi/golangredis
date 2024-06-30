@@ -186,23 +186,14 @@ func Xrange(args ...string) string {
 	firstIndex := slices.Index(stream.entryIds, start)
 	lastIndex := slices.Index(stream.entryIds, end)
 
-	entryIds := stream.entryIds[firstIndex : lastIndex+1]
-
-	fmt.Println("Stream: ", stream)
-	fmt.Println("Start: ", start)
-	fmt.Println("End: ", end)
-	fmt.Println("EntryIds: ", entryIds)
-
-	dataItems := make([]DataItem, 0)
-
-	for _, entryId := range entryIds {
-		item, ok := GetStorageItem(streamKey + "_" + entryId)
-		if ok {
-			dataItems = append(dataItems, item)
-		}
+	if start == "-" {
+		firstIndex = 0
+	}
+	if end == "+" {
+		lastIndex = len(stream.entryIds) - 1
 	}
 
-	fmt.Println("DataItems: ", dataItems)
+	entryIds := stream.entryIds[firstIndex : lastIndex+1]
 
 	result := make([]string, 0)
 
@@ -219,15 +210,11 @@ func Xrange(args ...string) string {
 
 		temp2Str := ToArray(temp2...)
 		temp = append(temp, temp2Str)
-		fmt.Println("Temp: ", temp)
-		fmt.Println("Temp2: ", temp2)
 		result = append(result, ToArray(temp...))
 
 	}
 
 	finalResult := ToArray(result...)
-
-	fmt.Printf("Result: %q\n", finalResult)
 
 	return finalResult
 }
