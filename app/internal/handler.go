@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 	"strconv"
 	"time"
 
@@ -173,4 +174,58 @@ func Xadd(args ...string) string {
 		return ToSimpleError(err.Error())
 	}
 	return ToBulkString(entryId)
+}
+
+func Xrange(args ...string) string {
+	streamKey := args[1]
+	start := args[3]
+	end := args[5]
+
+	stream := GetOrCreateStream(streamKey)
+
+	firstIndex := slices.Index(stream.entryIds, start)
+	lastIndex := slices.Index(stream.entryIds, end)
+
+	entryIds := stream.entryIds[firstIndex : lastIndex+1]
+
+	fmt.Println("Stream: ", stream)
+	fmt.Println("Start: ", start)
+	fmt.Println("End: ", end)
+	fmt.Println("EntryIds: ", entryIds)
+
+	dataItems := make([]DataItem, 0)
+
+	for _, entryId := range entryIds {
+		item, ok := GetStorageItem(streamKey + "_" + entryId)
+		if ok {
+			dataItems = append(dataItems, item)
+		}
+	}
+
+	fmt.Println("DataItems: ", dataItems)
+
+	result := make([]string, 0)
+
+	for _, entryId := range entryIds {
+		temp := make([]string, 0)
+		temp = append(temp, entryId)
+
+		temp2 := make([]string, 0)
+		item, ok := GetStorageItem(streamKey + "_" + entryId)
+		if ok {
+			temp2 = append(temp2, item.key)
+			temp2 = append(temp2, item.value)
+		}
+
+		temp2Str := ToArray(temp2...)
+		temp = append(temp, temp2Str)
+		fmt.Println("Temp: ", temp)
+		fmt.Println("Temp2: ", temp2)
+		result = append(result, ToArray(temp...))
+
+	}
+
+	fmt.Printf("Result: %q\n", result)
+
+	return ToArray(result...)
 }
