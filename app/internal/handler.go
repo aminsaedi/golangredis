@@ -218,3 +218,51 @@ func Xrange(args ...string) string {
 
 	return finalResult
 }
+
+func Xread(args ...string) string {
+
+	fmt.Println("args:", args)
+	streamKey := args[3]
+	entryId := args[5]
+
+	stream := GetOrCreateStream(streamKey)
+
+	index := slices.Index(stream.entryIds, entryId)
+
+	if index == -1 {
+		index = 0
+	}
+
+	result := make([]string, 0)
+
+	result = append(result, streamKey)
+
+	entryIds := stream.entryIds[index:]
+
+	fmt.Println("all entryIds:", stream.entryIds)
+	fmt.Println("entryIds:", entryIds)
+
+	for _, entryId := range entryIds {
+		temp := make([]string, 0)
+		temp = append(temp, entryId)
+
+		temp2 := make([]string, 0)
+		item, ok := GetStorageItem(streamKey + "_" + entryId)
+		if ok {
+			temp2 = append(temp2, item.key)
+			temp2 = append(temp2, item.value)
+		}
+
+		temp2Str := ToArray(temp2...)
+		temp = append(temp, temp2Str)
+		result = append(result, ToArray(temp...))
+
+	}
+
+	finalResult := ToArray(ToArray(result...))
+
+	fmt.Printf("result: %q\n", result)
+	fmt.Printf("finalResult: %q\n", finalResult)
+
+	return finalResult
+}
