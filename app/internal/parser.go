@@ -46,6 +46,7 @@ func ToArray(input ...string) string {
 	arrayPattern := regexp.MustCompile(`\*([0-9]+)\r\n`)
 	for _, v := range input {
 		if arrayPattern.MatchString(v) {
+			fmt.Println("Matched", v)
 			finalString += v
 		} else {
 			finalString += "$" + fmt.Sprint(len(v)) + "\r\n" + v + "\r\n"
