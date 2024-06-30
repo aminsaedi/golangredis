@@ -137,6 +137,8 @@ func HandleRequestAsMaster(conn net.Conn, shouldWriteResult bool) {
 			result = i.Xadd(args...)
 		case "XRANGE":
 			result = i.Xrange(args...)
+		case "XREAD":
+			result = i.Xread(args...)
 		}
 
 		if shouldWriteResult || (command == "REPLCONF" && args[1] == "GETACK") {
