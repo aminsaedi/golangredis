@@ -6,6 +6,7 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
@@ -151,6 +152,8 @@ func Type(args ...string) string {
 	return ToSimpleString("none")
 }
 
+var addedItems = make([]string, 0)
+
 func Xadd(args ...string) string {
 	streamKey := args[1]
 	entryId := args[3]
@@ -173,6 +176,7 @@ func Xadd(args ...string) string {
 	if !ok {
 		return ToSimpleError(err.Error())
 	}
+	addedItems = append(addedItems, entryId)
 	return ToBulkString(entryId)
 }
 
@@ -222,10 +226,35 @@ func Xrange(args ...string) string {
 func Xread(args ...string) string {
 	fmt.Println("XREAD", args)
 
+	if strings.ToUpper(args[1]) == "BLOCK" {
+		blockTime, _ := strconv.Atoi(args[3])
+		blockTime = blockTime - 200
+		start := time.Now()
+		fmt.Println("Args[9] is ", args[9])
+		for {
+			if time.Since(start).Milliseconds() > int64(blockTime) {
+				fmt.Println("Breaking because of block time")
+				break
+			}
+			if slices.Contains(addedItems, args[9]) {
+				fmt.Println("Breaking because of added items", addedItems)
+				break
+			}
+			time.Sleep(time.Duration(50) * time.Millisecond)
+			fmt.Println("Sleeping", addedItems)
+		}
+
+		addedItems = make([]string, 0)
+		args = args[4:]
+	}
+
 	getValue := func(streamKey string, entryId string) string {
+		fmt.Println("Getting value for", streamKey, entryId)
 		stream := GetOrCreateStream(streamKey)
 
 		index := slices.Index(stream.entryIds, entryId)
+
+		// index = index + 1
 
 		if index == -1 {
 			index = 0
@@ -276,8 +305,6 @@ func Xread(args ...string) string {
 		result = append(result, getValue(streamKey1, entryId1))
 		result = append(result, getValue(streamKey2, entryId2))
 	}
-
-	fmt.Printf("Result: %q\n", result)
 
 	finalResult := ToArray(result...)
 
