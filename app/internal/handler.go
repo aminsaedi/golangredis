@@ -6,6 +6,7 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
@@ -151,6 +152,8 @@ func Type(args ...string) string {
 	return ToSimpleString("none")
 }
 
+var addedItems = make([]string, 0)
+
 func Xadd(args ...string) string {
 	streamKey := args[1]
 	entryId := args[3]
@@ -173,6 +176,8 @@ func Xadd(args ...string) string {
 	if !ok {
 		return ToSimpleError(err.Error())
 	}
+	fmt.Println("Added", entryId)
+	addedItems = append(addedItems, entryId)
 	return ToBulkString(entryId)
 }
 
@@ -222,10 +227,42 @@ func Xrange(args ...string) string {
 func Xread(args ...string) string {
 	fmt.Println("XREAD", args)
 
+	if strings.ToUpper(args[1]) == "BLOCK" {
+		blockTime, _ := strconv.Atoi(args[3])
+		blockTime = blockTime - 200
+		start := time.Now()
+
+		lookupItem := args[9]
+		// lookupItem format is number1-number2 , increament number2 by 1
+		// lookupItemParts := strings.Split(lookupItem, "-")
+		// num, _ := strconv.Atoi(lookupItemParts[1])
+		// lookupItem = lookupItemParts[0] + "-" + strconv.Itoa(num+1)
+		for {
+			if time.Since(start).Milliseconds() > int64(blockTime) {
+				fmt.Println("Breaking because of block time")
+				break
+			}
+			if slices.Contains(addedItems, lookupItem) {
+				fmt.Println("Breaking because of added items", addedItems)
+				break
+			}
+			time.Sleep(time.Duration(5) * time.Millisecond)
+			// fmt.Println("Sleeping", addedItems)
+		}
+
+		time.Sleep(time.Duration(800) * time.Millisecond)
+		addedItems = make([]string, 0)
+		args = args[4:]
+	}
+
 	getValue := func(streamKey string, entryId string) string {
 		stream := GetOrCreateStream(streamKey)
+		fmt.Println("Getting value for", streamKey, entryId)
+		fmt.Println("Available ids: ", stream.entryIds)
 
 		index := slices.Index(stream.entryIds, entryId)
+
+		// index = index + 1
 
 		if index == -1 {
 			index = 0
@@ -276,8 +313,6 @@ func Xread(args ...string) string {
 		result = append(result, getValue(streamKey1, entryId1))
 		result = append(result, getValue(streamKey2, entryId2))
 	}
-
-	fmt.Printf("Result: %q\n", result)
 
 	finalResult := ToArray(result...)
 
