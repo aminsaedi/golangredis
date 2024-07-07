@@ -6,6 +6,7 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
@@ -151,6 +152,8 @@ func Type(args ...string) string {
 	return ToSimpleString("none")
 }
 
+var addedItems = 0
+
 func Xadd(args ...string) string {
 	streamKey := args[1]
 	entryId := args[3]
@@ -173,6 +176,7 @@ func Xadd(args ...string) string {
 	if !ok {
 		return ToSimpleError(err.Error())
 	}
+	addedItems++
 	return ToBulkString(entryId)
 }
 
@@ -221,6 +225,15 @@ func Xrange(args ...string) string {
 
 func Xread(args ...string) string {
 	fmt.Println("XREAD", args)
+
+	if strings.ToUpper(args[1]) == "BLOCK" {
+		// blockTime, _ := strconv.Atoi(args[3])
+		// blockTime = blockTime * 4
+		// fmt.Println("Sleeping for ", blockTime)
+		// time.Sleep(time.Duration(blockTime) * time.Millisecond)
+		// addedItems = 0
+		args = args[4:]
+	}
 
 	getValue := func(streamKey string, entryId string) string {
 		stream := GetOrCreateStream(streamKey)
@@ -276,8 +289,6 @@ func Xread(args ...string) string {
 		result = append(result, getValue(streamKey1, entryId1))
 		result = append(result, getValue(streamKey2, entryId2))
 	}
-
-	fmt.Printf("Result: %q\n", result)
 
 	finalResult := ToArray(result...)
 
