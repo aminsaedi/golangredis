@@ -83,7 +83,7 @@ func updateTransferedBytes(tokens []string) {
 
 func HandleRequestAsMaster(conn net.Conn, shouldWriteResult bool) {
 
-	// defer conn.Close()
+	defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
 	isConnectionFromSlave := false
