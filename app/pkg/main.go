@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	c "github.com/codecrafters-io/redis-starter-go/app/config"
 	i "github.com/codecrafters-io/redis-starter-go/app/internal"
@@ -138,10 +139,12 @@ func HandleRequestAsMaster(conn net.Conn, shouldWriteResult bool) {
 		case "XRANGE":
 			result = i.Xrange(args...)
 		case "XREAD":
+			fmt.Println("Case start:", time.Now())
 			result = i.Xread(args...)
 		}
 
 		if shouldWriteResult || (command == "REPLCONF" && args[1] == "GETACK") {
+			fmt.Println("Writing result: ", time.Now())
 			conn.Write([]byte(result))
 		}
 
